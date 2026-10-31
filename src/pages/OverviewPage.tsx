@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import { useState } from "react";
 import { getDocumentSignedUrl } from "../lib/supabase";
 import { ActivityItem } from "../components/ActivityItem";
 import { StatCard } from "../components/StatCard";
@@ -39,6 +40,7 @@ export function OverviewPage({
   userId: string;
 }) {
   const firstName = currentUserName.split(" ")[0];
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   const myDocuments = documents.filter((doc) => doc.uploaded_by === userId);
 
@@ -57,9 +59,15 @@ export function OverviewPage({
     .slice(0, 3);
 
   async function handleDownload(doc: DocumentItem) {
+    setDownloadError(null);
     const result = await getDocumentSignedUrl(doc.storage_path);
     if (!result.ok) {
-      alert((result as { error: string }).error);
+      setDownloadError(
+        result.error.includes("introuvable") ||
+          result.error.includes("not found")
+          ? "Fichier introuvable dans le stockage."
+          : result.error
+      );
       return;
     }
     window.location.href = result.url;
@@ -89,6 +97,12 @@ export function OverviewPage({
           <CloudUpload size={17} /> Déposer un document
         </button>
       </div>
+
+      {downloadError && (
+        <div className="upload-error" style={{ marginBottom: 16 }}>
+          {downloadError}
+        </div>
+      )}
 
       <section className="hero-card">
         <div className="hero-content">

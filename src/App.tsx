@@ -374,13 +374,16 @@ function App() {
             role === "etudiant" ? (
               <MyDepositsPage
                 documents={documentsData}
+                profiles={profilesData}
                 userId={user?.id ?? ""}
               />
             ) : (
               <ValidationPage
                 documents={documentsData}
+                profiles={profilesData}
                 userId={user?.id ?? ""}
                 role={role}
+                onRefresh={refreshDocuments}
               />
             )
           ) : activePage === "settings" ? (

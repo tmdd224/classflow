@@ -1,12 +1,24 @@
 import { useState, useRef } from "react";
-import { CloudUpload, CheckCircle2 } from "lucide-react";
+import { CloudUpload, CheckCircle2, FileText, AlertCircle, RefreshCw } from "lucide-react";
 import type { Course } from "../types";
 import {
   validateFile,
   uploadDocumentToStorage,
   insertDocument,
   buildStoragePath,
+  mimeTypeFromExtension,
 } from "../lib/supabase";
+import { formatFileSize } from "../data";
+
+type FileStatus = "idle" | "uploading" | "success" | "error";
+
+interface UploadFileEntry {
+  id: string;
+  file: File;
+  status: FileStatus;
+  error: string | null;
+  storagePath: string | null;
+}
 
 export function UploadPage({
   courses,
@@ -22,76 +34,163 @@ export function UploadPage({
   onCancel: () => void;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [file, setFile] = useState<File | null>(null);
+  const [uploads, setUploads] = useState<UploadFileEntry[]>([]);
   const [course, setCourse] = useState("");
   const [description, setDescription] = useState("");
   const [dragActive, setDragActive] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [globalError, setGlobalError] = useState<string | null>(null);
+
+  const hasFiles = uploads.length > 0;
+  const hasPending = uploads.some(
+    (u) => u.status === "idle" || u.status === "uploading"
+  );
+  const hasErrors = uploads.some((u) => u.status === "error");
 
   function triggerFileInput() {
     fileInputRef.current?.click();
   }
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const selected = event.target.files?.[0] ?? null;
-    setFile(selected);
-    setError(null);
-    // Permet de resélectionner le même fichier à nouveau
+    const files = Array.from(event.target.files ?? []);
+    addFiles(files);
     event.target.value = "";
   }
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
+  function addFiles(files: File[]) {
+    setGlobalError(null);
 
-    if (!file || !course) {
-      setError("Sélectionnez un fichier et un cours.");
+    const newEntries: UploadFileEntry[] = files.map((file) => ({
+      id: crypto.randomUUID(),
+      file,
+      status: "idle",
+      error: null,
+      storagePath: null,
+    }));
+
+    // Validate each file immediately
+    const validated = newEntries.map((entry) => {
+      const validation = validateFile(entry.file);
+      if (!validation.ok) {
+        return { ...entry, status: "error", error: validation.error };
+      }
+      return entry;
+    });
+
+    setUploads((prev) => [...prev, ...validated]);
+  }
+
+  function handleDrop(event: React.DragEvent) {
+    event.preventDefault();
+    setDragActive(false);
+
+    const files = Array.from(event.dataTransfer.files ?? []);
+    addFiles(files);
+  }
+
+  function handleRemove(id: string) {
+    setUploads((prev) => prev.filter((u) => u.id !== id));
+  }
+
+  function handleRetry(id: string) {
+    setUploads((prev) =>
+      prev.map((u) =>
+        u.id === id
+          ? { ...u, status: "idle", error: null, storagePath: null }
+          : u
+      )
+    );
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setGlobalError(null);
+
+    if (!course) {
+      setGlobalError("Sélectionnez un cours de destination.");
       return;
     }
 
-    const validation = validateFile(file);
-    if (!validation.ok) {
-      setError((validation as { error: string }).error);
+    const toUpload = uploads.filter(
+      (u) => u.status === "idle" || u.status === "error"
+    );
+
+    if (toUpload.length === 0) {
+      setGlobalError("Aucun fichier à déposer.");
       return;
     }
 
     const courseRecord = courses.find((c) => c.name === course);
-    const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
-    const storagePath = buildStoragePath(
-      courseRecord?.class_id ?? classId,
-      courseRecord?.id ?? "",
-      extension
+    const courseId = courseRecord?.id ?? null;
+
+    setSubmitting(true);
+
+    // Traite chaque fichier de maniere independente, un apres l'autre
+    for (const entry of toUpload) {
+      await processFile(entry, courseId, description);
+    }
+
+    setSubmitting(false);
+    onUploadComplete();
+  }
+
+  async function processFile(
+    entry: UploadFileEntry,
+    courseId: string | null,
+    description: string
+  ): Promise<void> {
+    const extension = entry.file.name.split(".").pop()?.toLowerCase() ?? "";
+    const storagePath = buildStoragePath(classId, courseId ?? "", extension);
+
+    setUploads((prev) =>
+      prev.map((u) => (u.id === entry.id ? { ...u, status: "uploading" } : u))
     );
 
-    setUploading(true);
+    // Etape 1 : envoi dans le stockage. L'insertion en base n'intervient
+    // qu'apres une reussite de l'upload.
+    const uploadResult = await uploadDocumentToStorage(
+      entry.file,
+      storagePath,
+      mimeTypeFromExtension(extension) ?? entry.file.type
+    );
 
-    uploadDocumentToStorage(file, storagePath, validation.mime_type)
-      .then(() =>
-        insertDocument({
-          title: file.name.replace(/\.[^/.]+$/, ""),
-          file_name: file.name,
-          storage_path: storagePath,
-          mime_type: validation.mime_type,
-          size_bytes: file.size,
-          description: description || null,
-          course_id: courseRecord?.id ?? null,
-          uploaded_by: userId,
-        })
-      )
-      .then(() => {
-        setUploading(false);
-        onUploadComplete();
-      })
-      .catch((err) => {
-        setUploading(false);
-        setError(
-          err instanceof Error
-            ? `Erreur inattendue : ${err.message}`
-            : "Erreur inattendue lors du dépôt."
-        );
-        // Le fichier n'est pas supprimé : la purge se fera côté serveur
-      });
+    if (!uploadResult.ok) {
+      setUploads((prev) =>
+        prev.map((u) =>
+          u.id === entry.id
+            ? { ...u, status: "error", error: uploadResult.error }
+            : u
+        )
+      );
+      return;
+    }
+
+    // Etape 2 : insertion en base uniquement si l'upload a reussi.
+    const insertResult = await insertDocument({
+      title: entry.file.name.replace(/\.[^/.]+$/, ""),
+      file_name: entry.file.name,
+      storage_path: storagePath,
+      mime_type: mimeTypeFromExtension(extension) ?? entry.file.type,
+      size_bytes: entry.file.size,
+      description: description || null,
+      course_id: courseId,
+      uploaded_by: userId,
+    });
+
+    if (!insertResult.ok) {
+      setUploads((prev) =>
+        prev.map((u) =>
+          u.id === entry.id
+            ? { ...u, status: "error", error: insertResult.error }
+            : u
+        )
+      );
+      return;
+    }
+
+    setUploads((prev) =>
+      prev.map((u) => (u.id === entry.id ? { ...u, status: "success" } : u))
+    );
   }
 
   function handleDragOver(event: React.DragEvent) {
@@ -104,41 +203,45 @@ export function UploadPage({
     setDragActive(false);
   }
 
-  function handleDrop(event: React.DragEvent) {
-    event.preventDefault();
-    setDragActive(false);
-
-    const dropped = event.dataTransfer.files?.[0] ?? null;
-    if (dropped) {
-      setFile(dropped);
-      setError(null);
-    }
-  }
+  const acceptedExtensions = [
+    ".pdf",
+    ".doc",
+    ".docx",
+    ".ppt",
+    ".pptx",
+    ".xls",
+    ".xlsx",
+    ".csv",
+    ".txt",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".zip",
+    ".ipynb",
+  ].join(",");
 
   return (
     <div className="upload-page">
       <div className="welcome-row">
         <div>
           <div className="eyebrow">
-            <span className="live-dot" /> DÉPÔT DE DOCUMENT
+            <span className="live-dot" /> DEPOT DE DOCUMENTS
           </div>
 
-          <h1>Déposer un document</h1>
+          <h1>Deposer des documents</h1>
 
           <p className="page-subtitle">
-            Sélectionnez un fichier, choisissez le cours de destination et
-            envoyez votre dépôt pour validation.
+            Selectionnez un ou plusieurs fichiers, choisissez le cours de
+            destination et envoyez vos depots pour validation.
           </p>
 
-          {error && (
-            <div className="upload-error">{error}</div>
-          )}
+          {globalError && <div className="upload-error">{globalError}</div>}
         </div>
       </div>
 
       <form className="upload-form" onSubmit={handleSubmit}>
         <div
-          className={`upload-dropzone ${dragActive ? "dragging" : ""} ${file ? "has-file" : ""}`}
+          className={`upload-dropzone ${dragActive ? "dragging" : ""} ${hasFiles ? "has-file" : ""}`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
@@ -148,33 +251,73 @@ export function UploadPage({
             ref={fileInputRef}
             type="file"
             className="upload-file-input"
-            accept=".pdf,.docx,.pptx"
+            multiple
+            accept={acceptedExtensions}
             onChange={handleFileChange}
           />
 
-          {file ? (
+          {hasFiles ? (
             <>
-              <div className="upload-selected-icon">
-                <CheckCircle2 size={28} />
+              <div className="upload-list">
+                {uploads.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className={`upload-item ${entry.status}`}
+                  >
+                    <div className="upload-item-icon">
+                      <FileText size={16} />
+                    </div>
+
+                    <div className="upload-item-info">
+                      <strong>{entry.file.name}</strong>
+                      <span>
+                        {formatFileSize(entry.file.size)} ·
+                        {entry.file.type || "type inconnu"}
+                      </span>
+                    </div>
+
+                    <div className="upload-item-status">
+                      {entry.status === "error" ? (
+                        <>
+                          <AlertCircle size={14} />
+                          <span className="upload-error">{entry.error}</span>
+                        </>
+                      ) : entry.status === "success" ? (
+                        <>
+                          <CheckCircle2 size={14} />
+                          <span>Depose</span>
+                        </>
+                      ) : entry.status === "uploading" ? (
+                        <>
+                          <div className="upload-progress-bar" />
+                          <span>Envoi…</span>
+                        </>
+                      ) : (
+                        <span>En attente</span>
+                      )}
+                    </div>
+
+                    {entry.status === "error" && (
+                      <button
+                        type="button"
+                        className="upload-retry"
+                        onClick={() => handleRetry(entry.id)}
+                      >
+                        <RefreshCw size={14} /> Reessayer
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      className="upload-remove"
+                      onClick={() => handleRemove(entry.id)}
+                      aria-label="Supprimer ce fichier"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ))}
               </div>
-
-              <strong>{file.name}</strong>
-              <span>{file.type}</span>
-
-              <button
-                type="button"
-                className="upload-change-button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setFile(null);
-                  setError(null);
-                  if (fileInputRef.current) {
-                    fileInputRef.current.value = "";
-                  }
-                }}
-              >
-                Changer de fichier
-              </button>
             </>
           ) : (
             <>
@@ -182,8 +325,10 @@ export function UploadPage({
                 <CloudUpload size={28} />
               </div>
 
-              <strong>Choisir un fichier</strong>
-              <span>Glissez-déposez ou cliquez pour sélectionner</span>
+              <strong>Choisir des fichiers</strong>
+              <span>
+                Glissez-deposez ou cliquez pour selectionner plusieurs fichiers
+              </span>
             </>
           )}
         </div>
@@ -195,6 +340,7 @@ export function UploadPage({
               className="upload-field select"
               value={course}
               onChange={(event) => setCourse(event.target.value)}
+              disabled={submitting}
             >
               <option value="">Sélectionner un cours</option>
               {[1, 2].map((sem) => {
@@ -219,8 +365,9 @@ export function UploadPage({
               className="upload-field textarea"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="Précisez le contenu de ce dépôt…"
+              placeholder="Precisez le contenu de ces depots…"
               rows={3}
+              disabled={submitting}
             />
           </div>
         </div>
@@ -230,29 +377,43 @@ export function UploadPage({
             type="button"
             className="text-button"
             onClick={onCancel}
-            disabled={uploading}
+            disabled={submitting || !hasFiles}
           >
             Annuler
           </button>
           <button
             type="submit"
             className="primary-button"
-            disabled={!file || !course || uploading}
+            disabled={
+              !course ||
+              !hasFiles ||
+              submitting ||
+              uploads.every((u) => u.status === "success" || u.status === "error")
+            }
           >
-            {uploading ? "Dépôt en cours…" : "Déposer le document"}
+            {submitting ? "Depot en cours…" : "Deposer les fichiers"}
           </button>
         </div>
       </form>
 
-      <div className="upload-information">
-        <p>
-          Votre document sera examiné par l'équipe pédagogique avant
-          publication. Vous recevrez une notification une fois validé.
-        </p>
-        <p>
-          Formats acceptés : PDF, DOCX, PPTX. Taille maximale : 20 Mo.
-        </p>
-      </div>
+      {hasFiles && (
+        <div className="upload-information">
+          <p>
+            Chaque fichier sera examine par l'equipe pedagogique avant
+            publication. Vous recevrez une notification une fois valide.
+          </p>
+          <p>
+            Formats accepts : PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, CSV, TXT,
+            PNG, JPG, JPEG, ZIP, IPYNB. Taille maximale : 20 Mo par fichier.
+          </p>
+          {hasErrors && (
+            <p className="upload-error">
+              Certains fichiers presentent des erreurs. Corrigez-les avant de
+              deposer.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

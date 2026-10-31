@@ -1,4 +1,5 @@
 import { ArrowRight, FileText } from "lucide-react";
+import { useState } from "react";
 import { getDocumentSignedUrl } from "../lib/supabase";
 import type { Course, DocumentItem } from "../types";
 
@@ -15,6 +16,7 @@ export function CoursesPage({
   onSelectCourse: (code: string | null) => void;
   userId: string;
 }) {
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   // Construire les ressources par cours à partir des documents de la base
   const courseResources: Record<string, { name: string; type: string; date: string }[]> = {};
   for (const doc of documents) {
@@ -37,9 +39,15 @@ export function CoursesPage({
   const selected = courses.find((course) => course.code === selectedCourse);
 
   async function handleDownload(doc: DocumentItem) {
+    setDownloadError(null);
     const result = await getDocumentSignedUrl(doc.storage_path);
     if (!result.ok) {
-      alert((result as { error: string }).error);
+      setDownloadError(
+        result.error.includes("introuvable") ||
+          result.error.includes("not found")
+          ? "Fichier introuvable dans le stockage."
+          : result.error
+      );
       return;
     }
     window.location.href = result.url;
@@ -74,6 +82,11 @@ export function CoursesPage({
 
     return (
       <div className="courses-page">
+        {downloadError && (
+          <div className="upload-error" style={{ marginBottom: 16 }}>
+            {downloadError}
+          </div>
+        )}
         <button
           className="text-button"
           onClick={() => onSelectCourse(null)}

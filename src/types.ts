@@ -65,6 +65,15 @@ export type DocumentItem = {
   uploaded_by: string;
   status: DocumentStatus;
   description?: string;
+  rejection_reason?: string;
+};
+
+export type DocumentEvent = {
+  id: string;
+  document_id: string;
+  action: string;
+  reason: string | null;
+  created_at: string;
 };
 
 export type Profile = {
@@ -107,6 +116,7 @@ export type DocumentDB = {
   visibility: string;
   class_id: string | null;
   created_at: string;
+  rejection_reason: string | null;
 };
 
 /** Ligne de la table `classes` dans Supabase. */

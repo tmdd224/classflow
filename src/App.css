@@ -905,3 +905,160 @@
   color: #393548;
   margin: 0 0 12px;
 }
+
+/* ===== LISTE DES FICHIERS A DEPOSER ===== */
+
+.upload-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.upload-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(150, 150, 170, 0.2);
+  border-radius: 10px;
+  background: rgba(120, 120, 150, 0.04);
+}
+
+.upload-item-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: rgba(150, 115, 255, 0.13);
+  color: #a88aff;
+  flex-shrink: 0;
+}
+
+.upload-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.upload-item-info strong {
+  display: block;
+  font-size: 13px;
+  color: #464153;
+  overflow-wrap: anywhere;
+}
+
+.upload-item-info span {
+  font-size: 11px;
+  color: #8e8998;
+}
+
+.upload-item-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  min-width: 130px;
+}
+
+.upload-item-status .upload-error {
+  color: #ff7777;
+  font-size: 11px;
+  margin: 0;
+}
+
+.upload-progress-bar {
+  width: 100px;
+  height: 6px;
+  background: rgba(150, 150, 170, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.upload-retry,
+.upload-remove {
+  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.upload-retry {
+  color: #9675ed;
+}
+
+.upload-remove {
+  color: #a09baa;
+}
+
+.upload-remove:hover {
+  color: #ff7777;
+}
+
+/* ===== HISTORIQUE ET AUTEUR (Validations) ===== */
+
+.document-author {
+  font-size: 11px;
+  color: #8e8998;
+  margin-top: 4px;
+}
+
+.action-reason {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid rgba(150, 150, 170, 0.2);
+  border-radius: 10px;
+  background: rgba(120, 120, 150, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.action-reason textarea {
+  width: 100%;
+  min-height: 60px;
+  border: 1px solid rgba(150, 150, 170, 0.2);
+  border-radius: 6px;
+  padding: 10px;
+  font: inherit;
+  resize: vertical;
+}
+
+.document-history {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid rgba(150, 150, 170, 0.2);
+  border-radius: 10px;
+  background: rgba(120, 120, 150, 0.04);
+}
+
+.document-history ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.document-history li {
+  font-size: 11px;
+  color: #8e8998;
+  display: flex;
+  gap: 10px;
+}
+
+.document-history .history-action {
+  font-weight: 600;
+  color: #464153;
+}
+
+.document-history .history-date {
+  color: #a09baa;
+}
+
+.document-history .history-reason {
+  font-style: italic;
+}

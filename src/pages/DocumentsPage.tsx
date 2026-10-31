@@ -1,6 +1,7 @@
 import { FileText } from "lucide-react";
+import { useState } from "react";
 import type { DocumentItem } from "../types";
-import { getDocumentSignedUrl } from "../lib/supabase";
+import { getDocumentSignedUrl, translateDbError } from "../lib/supabase";
 
 export function DocumentsPage({
   documents,
@@ -10,6 +11,7 @@ export function DocumentsPage({
   query: string;
 }) {
   const search = query.toLowerCase().trim();
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   const library = [...documents];
 
@@ -21,9 +23,15 @@ export function DocumentsPage({
   });
 
   async function handleDownload(doc: DocumentItem) {
+    setDownloadError(null);
     const result = await getDocumentSignedUrl(doc.storage_path);
     if (!result.ok) {
-      alert((result as { error: string }).error);
+      setDownloadError(
+        result.error.includes("introuvable") ||
+          result.error.includes("not found")
+          ? "Fichier introuvable dans le stockage."
+          : result.error
+      );
       return;
     }
     window.location.href = result.url;
@@ -44,6 +52,12 @@ export function DocumentsPage({
           </p>
         </div>
       </div>
+
+      {downloadError && (
+        <div className="upload-error" style={{ marginBottom: 16 }}>
+          {downloadError}
+        </div>
+      )}
 
       <section className="panel documents-panel">
         <div className="section-heading">

@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Clock3, CheckCircle2, FileText, ShieldCheck, X } from "lucide-react";
-import type { DocumentItem } from "../types";
-import { getDocumentSignedUrl } from "../lib/supabase";
+import type { DocumentItem, User } from "../types";
+import {
+  getDocumentSignedUrl,
+  translateDbError,
+} from "../lib/supabase";
 
 const MONTHS_FR = [
   "janv.", "févr.", "mars", "avr.", "mai", "juin",
@@ -15,12 +18,19 @@ function formatDate(iso: string): string {
 
 export function MyDepositsPage({
   documents,
+  profiles,
   userId,
 }: {
   documents: DocumentItem[];
+  profiles: User[];
   userId: string;
 }) {
   const [filter, setFilter] = useState("Tous");
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  const profileById = new Map(
+    profiles.map((p) => [p.id, p.name ?? p.email ?? "Utilisateur inconnu"])
+  );
 
   const myDocuments = documents.filter((doc) => doc.uploaded_by === userId);
 
@@ -52,29 +62,44 @@ export function MyDepositsPage({
     return true;
   });
 
-  async function handleDownload(doc: DocumentItem) {
-    const result = await getDocumentSignedUrl(doc.storage_path);
-    if (!result.ok) {
-      alert((result as { error: string }).error);
-      return;
-    }
-    window.location.href = result.url;
-  }
+  const handleDownload = useCallback(
+    async (doc: DocumentItem) => {
+      setDownloadError(null);
+      const result = await getDocumentSignedUrl(doc.storage_path);
+      if (!result.ok) {
+        setDownloadError(
+          result.error.includes("introuvable") ||
+            result.error.includes("not found")
+            ? "Fichier introuvable dans le stockage."
+            : result.error
+        );
+        return;
+      }
+      window.location.href = result.url;
+    },
+    []
+  );
 
   return (
     <div className="deposits-page">
       <div className="welcome-row">
         <div>
           <div className="eyebrow">
-            <span className="live-dot" /> MES DÉPÔTS
+            <span className="live-dot" /> MES DEPOTS
           </div>
 
-          <h1>Mes dépôts</h1>
+          <h1>Mes depots</h1>
 
           <p className="page-subtitle">
-            Suivez l'état de vos documents déposés.
+            Suivez l'etat de vos documents depose.
           </p>
         </div>
+
+        {downloadError && (
+          <div className="upload-error" style={{ marginTop: 12 }}>
+            {downloadError}
+          </div>
+        )}
       </div>
 
       <div className="validation-stats">
@@ -87,21 +112,21 @@ export function MyDepositsPage({
         <div className="panel validation-stat">
           <CheckCircle2 size={22} />
           <strong>{approved.length}</strong>
-          <span>Validés</span>
+          <span>Valides</span>
         </div>
 
         <div className="panel validation-stat">
           <X size={22} />
           <strong>{rejected.length}</strong>
-          <span>Refusés</span>
+          <span>Refuses</span>
         </div>
       </div>
 
       <section className="panel validation-panel">
         <div className="section-heading">
           <div>
-            <span className="section-kicker">SUIVI ACADÉMIQUE</span>
-            <h3>Mes documents déposés</h3>
+            <span className="section-kicker">SUIVI ACADEMIQUE</span>
+            <h3>Mes documents deposes</h3>
           </div>
 
           <select
@@ -111,8 +136,8 @@ export function MyDepositsPage({
           >
             <option value="Tous">Tous</option>
             <option value="En attente">En attente</option>
-            <option value="Validés">Validés</option>
-            <option value="Refusés">Refusés</option>
+            <option value="Valides">Valides</option>
+            <option value="Refuses">Refuses</option>
           </select>
         </div>
 
@@ -120,67 +145,79 @@ export function MyDepositsPage({
           <div className="validation-empty">
             <ShieldCheck size={35} />
 
-            <h3>Aucun dépôt</h3>
+            <h3>Aucun depot</h3>
 
             <p>
-              Vos documents déposés apparaîtront ici pour suivi.
+              Vos documents deposes apparaitront ici pour suivi.
             </p>
           </div>
         ) : (
           <div className="validation-list">
-            {filteredDocuments.map((doc) => (
-              <article className="validation-item" key={doc.id}>
-                <div className="validation-document-header">
-                  <div className={`file-icon ${doc.color}`}>
-                    <FileText size={20} />
-                  </div>
+            {filteredDocuments.map((doc) => {
+              const author = profileById.get(doc.uploaded_by);
+              return (
+                <article className="validation-item" key={doc.id}>
+                  <div className="validation-document-header">
+                    <div className={`file-icon ${doc.color}`}>
+                      <FileText size={20} />
+                    </div>
 
-                  <div className="validation-document-info">
-                    <strong>{doc.name}</strong>
+                    <div className="validation-document-info">
+                      <strong>{doc.name}</strong>
 
-                    <span>
-                      {doc.course} · {formatDate(doc.date)} · {doc.size}
+                      <span>
+                        {doc.course} · {formatDate(doc.date)} · {doc.size}
+                      </span>
+
+                      {author && (
+                        <span className="document-author">
+                          Par {author}
+                        </span>
+                      )}
+                    </div>
+
+                    <span
+                      className={`validation-status ${
+                        doc.status === "approved"
+                          ? "approved"
+                          : doc.status === "rejected"
+                            ? "rejected"
+                            : "pending"
+                      }`}
+                    >
+                      {doc.status === "approved"
+                        ? "Valide"
+                        : doc.status === "rejected"
+                          ? "Refuse"
+                          : "En attente"}
                     </span>
                   </div>
 
-                  <span
-                    className={`validation-status ${
-                      doc.status === "approved"
-                        ? "approved"
-                        : doc.status === "rejected"
-                          ? "rejected"
-                          : "pending"
-                    }`}
-                  >
-                    {doc.status === "approved"
-                      ? "Validé"
-                      : doc.status === "rejected"
-                        ? "Refusé"
-                        : "En attente"}
-                  </span>
-                </div>
+                  {doc.description && (
+                    <p className="validation-description">{doc.description}</p>
+                  )}
 
-                {doc.description && (
-                  <p className="validation-description">{doc.description}</p>
-                )}
+                  {doc.status === "rejected" && (
+                    <div className="validation-comment">
+                      <strong>Motif du refus :</strong>
+                      <p>
+                        {doc.rejection_reason ||
+                          "Ce document a ete refuse par l'equipe pedagogique."}
+                      </p>
+                    </div>
+                  )}
 
-                {doc.status === "rejected" && (
-                  <div className="validation-comment">
-                    <strong>Motif du refus :</strong>
-                    <p>Ce document a été refusé par l'équipe pédagogique.</p>
+                  <div className="validation-actions">
+                    <button
+                      className="reset-filters"
+                      onClick={() => handleDownload(doc)}
+                    >
+                      <span>↓</span> Telecharger
+                    </button>
                   </div>
-                )}
-
-                <div className="validation-actions">
-                  <button
-                    className="reset-filters"
-                    onClick={() => handleDownload(doc)}
-                  >
-                    <span>↓</span> Télécharger
-                  </button>
-                </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
         )}
       </section>

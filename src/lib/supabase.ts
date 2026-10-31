@@ -6,6 +6,7 @@ import type {
   Classe,
   DocumentDB,
   DocumentItem,
+  DocumentEvent,
   Profile,
   User,
 } from "../types";
@@ -147,6 +148,7 @@ export function dbToDocumentItem(db: DocumentDB): DocumentItem {
     uploaded_by: db.uploaded_by,
     status: db.status,
     description: db.description ?? undefined,
+    rejection_reason: db.rejection_reason ?? undefined,
   };
 }
 
@@ -211,7 +213,22 @@ export function buildCourseResources(
 /**
  * Extensions autorisées côté client.
  */
-export const ALLOWED_EXTENSIONS = ["pdf", "docx", "pptx"] as const;
+export const ALLOWED_EXTENSIONS = [
+  "pdf",
+  "doc",
+  "docx",
+  "ppt",
+  "pptx",
+  "xls",
+  "xlsx",
+  "csv",
+  "txt",
+  "png",
+  "jpg",
+  "jpeg",
+  "zip",
+  "ipynb",
+] as const;
 
 /**
  * Taille maximale autorisée : 20 Mo.
@@ -226,10 +243,31 @@ export function mimeTypeFromExtension(extension: string): string | null {
   switch (extension.toLowerCase()) {
     case "pdf":
       return "application/pdf";
+    case "doc":
+      return "application/msword";
     case "docx":
       return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    case "ppt":
+      return "application/vnd.ms-powerpoint";
     case "pptx":
       return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+    case "xls":
+      return "application/vnd.ms-excel";
+    case "xlsx":
+      return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    case "csv":
+      return "text/csv";
+    case "txt":
+      return "text/plain";
+    case "png":
+      return "image/png";
+    case "jpg":
+    case "jpeg":
+      return "image/jpeg";
+    case "zip":
+      return "application/zip";
+    case "ipynb":
+      return "application/x-ipynb+json";
     default:
       return null;
   }
@@ -244,12 +282,23 @@ export function validateFile(file: File): {
   mime_type: string;
 } | { ok: false; error: string } {
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+
+  // Un fichier sans extension (dossier déposé tel quel) est refusé
+  if (!extension) {
+    return {
+      ok: false,
+      error:
+        "Un dossier ne peut pas être envoyé tel quel : sélectionnez ses fichiers ou compressez-le en .zip",
+    };
+  }
+
   const mime_type = mimeTypeFromExtension(extension);
 
   if (!mime_type) {
     return {
       ok: false,
-      error: "Extension non autorisée. Seuls les fichiers PDF, DOCX et PPTX sont acceptés.",
+      error:
+        "Extension non autorisée. Formats acceptés : PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, CSV, TXT, PNG, JPG, JPEG, ZIP, IPYNB.",
     };
   }
 
@@ -376,5 +425,67 @@ export async function getDocumentSignedUrl(
   }
 
   return { ok: true, url: data.signedUrl };
+}
+
+/**
+ * Traduit une erreur Supabase en message français lisible.
+ */
+export function translateDbError(error: unknown): string {
+  const message = (error as { message?: string }).message?.toLowerCase() ?? "";
+  if (message.includes("permission") || message.includes("droit") || message.includes("forbidden")) {
+    return "Droit refusé par le serveur.";
+  }
+  if (message.includes("row-level security") || message.includes("row level security")) {
+    return "Accès refusé par la politique de sécurité des données.";
+  }
+  if (message.includes("not found") || message.includes("introuvable")) {
+    return "Élément introuvable.";
+  }
+  if (message.includes("network") || message.includes("fetch") || message.includes("echec")) {
+    return "Erreur réseau. Vérifiez votre connexion.";
+  }
+  return "Erreur inattendue du serveur.";
+}
+
+/**
+ * Valide ou refuse un document via la fonction RPC `review_document`.
+ * p_decision: 'approved' | 'rejected' | 'reopened'
+ * p_comment: motif obligatoire pour un refus ou une réouverture.
+ */
+export async function reviewDocument(
+  documentId: string,
+  decision: "approved" | "rejected" | "reopened",
+  comment: string | null
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { error } = await supabase.rpc("review_document", {
+    p_document_id: documentId,
+    p_decision: decision,
+    p_comment: comment,
+  });
+
+  if (error) {
+    return { ok: false, error: translateDbError(error) };
+  }
+
+  return { ok: true };
+}
+
+/**
+ * Récupère l'historique des événements d'un document depuis `document_events`.
+ */
+export async function fetchDocumentEvents(
+  documentId: string
+): Promise<{ ok: true; events: DocumentEvent[] } | { ok: false; error: string }> {
+  const { data, error } = await supabase
+    .from("document_events")
+    .select("id, document_id, action, reason, created_at")
+    .eq("document_id", documentId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    return { ok: false, error: translateDbError(error) };
+  }
+
+  return { ok: true, events: (data ?? []) as DocumentEvent[] };
 }
 
