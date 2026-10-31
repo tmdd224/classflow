@@ -174,6 +174,7 @@ export function UploadPage({
       size_bytes: entry.file.size,
       description: description || null,
       course_id: courseId,
+      course: courseRecord?.name ?? null,
       uploaded_by: userId,
     });
 

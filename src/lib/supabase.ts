@@ -368,6 +368,7 @@ export async function insertDocument(document: {
   size_bytes: number;
   description: string | null;
   course_id: string | null;
+  course: string | null;
   uploaded_by: string;
 }): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const { data, error } = await supabase
@@ -381,6 +382,7 @@ export async function insertDocument(document: {
         size_bytes: document.size_bytes,
         description: document.description,
         course_id: document.course_id,
+        course: document.course,
         uploaded_by: document.uploaded_by,
       },
     ])
