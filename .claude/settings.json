@@ -11,7 +11,10 @@
       "Bash(git commit -m 'Refactor : découpage d'\\\\''App.tsx en pages, types et données *)",
       "Bash(git commit -m 'Ajout : page Administrateur \\(simulation lecture seule\\) *)",
       "Bash(git commit -m 'Fix : icônes de menu, en-têtes et grilles tableaux Administration *)",
-      "Bash(git commit -m 'feat\\(admin\\) : retouches finales de la page Administration *)"
+      "Bash(git commit -m 'feat\\(admin\\) : retouches finales de la page Administration *)",
+      "Bash(git check-ignore *)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(git commit -m 'feat\\(auth\\) : connexion Supabase \\(étape 1\\) *)"
     ]
   }
 }

@@ -14,6 +14,9 @@ import {
 import { useState } from "react";
 import "./App.css";
 
+import { useAuth } from "./auth/AuthContext";
+import { LoginPage } from "./pages/LoginPage";
+import { PendingActivationPage } from "./pages/PendingActivationPage";
 import { courses, courseResources, formatFileSize, navigation } from "./data";
 import { AdminPage } from "./pages/AdminPage";
 import { CoursesPage } from "./pages/CoursesPage";
@@ -26,13 +29,45 @@ import { PlaceholderPage } from "./pages/PlaceholderPage";
 import type { DocumentItem, PageKey, Role } from "./types";
 import { roleLabels } from "./types";
 
+function initials(source: string) {
+  return source
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part[0]?.toUpperCase())
+    .slice(0, 2)
+    .join("") || "?";
+}
+
 function App() {
+  const { user, profile, loading, signOut } = useAuth();
+
+  // Gestion de l'authentification Supabase.
+  // 1. Tant que la session n'est pas chargée -> état de chargement.
+  // 2. Sans session -> page de connexion uniquement.
+  // 3. Profil introuvable ou compte non actif -> écran d'attente d'activation.
+  if (loading) {
+    return (
+      <div className="page-content" style={{ height: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        Chargement de votre session…
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginPage />;
+  }
+
+  if (!profile || !profile.active) {
+    return <PendingActivationPage onLogout={signOut} />;
+  }
+
+  const role: Role = profile.role;
+
   const [activePage, setActivePage] = useState<PageKey>("overview");
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [mobileMenu, setMobileMenu] = useState(false);
   const [uploadedDocuments, setUploadedDocuments] = useState<DocumentItem[]>([]);
-  const [role, setRole] = useState<Role>("etudiant");
 
   const pageTitle =
     navigation.find((item) => item.key === activePage)?.label ?? "Paramètres";
@@ -112,6 +147,16 @@ function App() {
     );
   }
 
+  const displayName =
+    profile.full_name ?? profile.email?.split("@")[0] ?? "Utilisateur";
+  const avatarInitials = initials(
+    profile.full_name ?? profile.email?.split("@")[0] ?? "U"
+  );
+  const roleLabel =
+    role === "etudiant" && profile.class_id
+      ? `${roleLabels[role]} · ${profile.class_id}`
+      : roleLabels[role];
+
   return (
     <div className="app-shell">
       {mobileMenu && (
@@ -150,10 +195,6 @@ function App() {
           </div>
 
           <ChevronRight size={16} className="muted-icon" />
-        </div>
-
-        <div className="demo-banner">
-          Mode démonstration — non sécurisé
         </div>
 
         <div className="nav-label">ESPACE ACADÉMIQUE</div>
@@ -212,38 +253,18 @@ function App() {
           </div>
 
           <div className="profile-mini">
-            <div className="profile-avatar">TD</div>
+            <div className="profile-avatar">{avatarInitials}</div>
 
             <div className="profile-copy">
-              <strong>Thierno D.</strong>
-              <span>
-                {role === "etudiant" ? `${roleLabels[role]} · L3 IA` : roleLabels[role]}
-              </span>
+              <strong>{displayName}</strong>
+              <span>{roleLabel}</span>
             </div>
 
             <MoreHorizontal size={19} className="muted-icon" />
-          </div>
 
-          <div className="role-selector-section">
-            <label className="role-selector-label">Rôle (démo)</label>
-            <select
-              className="role-selector"
-              value={role}
-              onChange={(event) => {
-                const newRole = event.target.value as Role;
-                setRole(newRole);
-                const entry = navigation.find((item) => item.key === activePage);
-                if (entry && !entry.roles.includes(newRole)) {
-                  navigate("overview");
-                }
-              }}
-            >
-              <option value="etudiant">Étudiant</option>
-              <option value="responsable">
-                Responsable pédagogique
-              </option>
-              <option value="administrateur">Administrateur</option>
-            </select>
+            <button className="logout-button" onClick={signOut}>
+              Déconnexion
+            </button>
           </div>
         </div>
       </aside>

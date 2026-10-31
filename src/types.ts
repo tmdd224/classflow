@@ -61,3 +61,12 @@ export type DocumentItem = {
   status?: DocumentStatus;
   reviewComment?: string;
 };
+
+export type Profile = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  role: Role;
+  class_id: string | null;
+  active: boolean;
+};
