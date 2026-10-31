@@ -15,6 +15,7 @@ import { useState } from "react";
 import "./App.css";
 
 import { courses, courseResources, formatFileSize, navigation } from "./data";
+import { AdminPage } from "./pages/AdminPage";
 import { CoursesPage } from "./pages/CoursesPage";
 import { DocumentsPage } from "./pages/DocumentsPage";
 import { UploadPage } from "./pages/UploadPage";
@@ -226,7 +227,14 @@ function App() {
             <select
               className="role-selector"
               value={role}
-              onChange={(event) => setRole(event.target.value as Role)}
+              onChange={(event) => {
+                const newRole = event.target.value as Role;
+                setRole(newRole);
+                const entry = navigation.find((item) => item.key === activePage);
+                if (entry && !entry.roles.includes(newRole)) {
+                  navigate("overview");
+                }
+              }}
             >
               <option value="etudiant">Étudiant</option>
               <option value="responsable">
@@ -317,10 +325,9 @@ function App() {
               />
             )
           ) : activePage === "settings" ? (
-            <PlaceholderPage
-              page="settings"
-              title={role === "administrateur" ? "Administration" : "Paramètres"}
-            />
+            <PlaceholderPage page="settings" title="Paramètres" />
+          ) : activePage === "administration" ? (
+            <AdminPage uploadedDocuments={uploadedDocuments} />
           ) : null}
         </div>
       </main>

@@ -4,6 +4,7 @@ export type PageKey =
   | "documents"
   | "upload"
   | "validation"
+  | "administration"
   | "settings";
 
 export type DocumentStatus = "pending" | "approved" | "rejected";
@@ -25,6 +26,24 @@ export type Course = {
   resources: number;
   color: string;
   initials: string;
+  responsable?: string;
+};
+
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  classe?: string;
+  status: "actif" | "inactif";
+};
+
+export type Classe = {
+  id: string;
+  name: string;
+  niveau: string;
+  effectif: number;
+  responsable?: string;
 };
 
 export type DocumentItem = {

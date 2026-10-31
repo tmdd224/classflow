@@ -16,6 +16,8 @@ export function PlaceholderPage({
       "Une bibliothèque centralisée pour retrouver tes supports de cours.",
     upload: "Partage un support de cours avec ta communauté académique.",
     validation: "Suis les documents en attente de validation.",
+    administration:
+      "Pilote les utilisateurs, les classes et les cours de la plateforme.",
     settings: "Gère ton profil et tes préférences ClassFlow.",
   };
 

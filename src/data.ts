@@ -1,5 +1,11 @@
 import { LayoutDashboard } from "lucide-react";
-import type { DocumentItem, PageKey, Role } from "./types";
+import type {
+  DocumentItem,
+  PageKey,
+  Role,
+  User,
+  Classe,
+} from "./types";
 
 export const navigation: {
   key: PageKey;
@@ -12,6 +18,7 @@ export const navigation: {
   { key: "documents", label: "Documents", icon: LayoutDashboard, roles: ["etudiant", "responsable", "administrateur"] },
   { key: "upload", label: "Déposer un fichier", icon: LayoutDashboard, roles: ["etudiant", "responsable", "administrateur"] },
   { key: "validation", label: "Validations", icon: LayoutDashboard, roles: ["etudiant", "responsable", "administrateur"] },
+  { key: "administration", label: "Administration", icon: LayoutDashboard, roles: ["administrateur"] },
 ];
 
 export const documents: DocumentItem[] = [
@@ -101,6 +108,7 @@ export const courses = [
     resources: 14,
     color: "purple",
     initials: "IA",
+    responsable: "Fatoumata Sy",
   },
   {
     name: "Big Data",
@@ -109,6 +117,7 @@ export const courses = [
     resources: 12,
     color: "blue",
     initials: "BD",
+    responsable: "Moustapha Ba",
   },
   {
     name: "Développement Web",
@@ -117,6 +126,87 @@ export const courses = [
     resources: 9,
     color: "orange",
     initials: "DW",
+    responsable: "Moustapha Ba",
+  },
+];
+
+export const users: User[] = [
+  {
+    id: "U1",
+    name: "Thierno Diallo",
+    email: "thierno.diallo@ism.sn",
+    role: "etudiant",
+    classe: "L3 IA",
+    status: "actif",
+  },
+  {
+    id: "U2",
+    name: "Aïssatou Ndiaye",
+    email: "aissatou.ndiaye@ism.sn",
+    role: "etudiant",
+    classe: "L3 IA",
+    status: "actif",
+  },
+  {
+    id: "U3",
+    name: "Cheikh Touré",
+    email: "cheikh.toure@ism.sn",
+    role: "etudiant",
+    classe: "L3 Big Data",
+    status: "inactif",
+  },
+  {
+    id: "U4",
+    name: "Fatoumata Sy",
+    email: "fatoumata.sy@ism.sn",
+    role: "responsable",
+    classe: "Intelligence artificielle",
+    status: "actif",
+  },
+  {
+    id: "U5",
+    name: "Moustapha Ba",
+    email: "moustapha.ba@ism.sn",
+    role: "responsable",
+    classe: "Développement Web",
+    status: "actif",
+  },
+  {
+    id: "U6",
+    name: "Admin ClassFlow",
+    email: "admin@classflow.sn",
+    role: "administrateur",
+    status: "actif",
+  },
+];
+
+export const classes: Classe[] = [
+  {
+    id: "C1",
+    name: "Licence 3 Intelligence Artificielle",
+    niveau: "L3",
+    effectif: 42,
+    responsable: "Fatoumata Sy",
+  },
+  {
+    id: "C2",
+    name: "Licence 3 Big Data",
+    niveau: "L3",
+    effectif: 38,
+    responsable: "Moustapha Ba",
+  },
+  {
+    id: "C3",
+    name: "Licence 3 Développement Web",
+    niveau: "L3",
+    effectif: 45,
+    responsable: "Moustapha Ba",
+  },
+  {
+    id: "C4",
+    name: "Master 1 Science des Données",
+    niveau: "M1",
+    effectif: 28,
   },
 ];
 
