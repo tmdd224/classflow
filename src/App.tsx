@@ -135,9 +135,9 @@ function App() {
   const role: Role = profile.role;
 
   const displayName =
-    profile.full_name ?? profile.email?.split("@")[0] ?? "Utilisateur";
+    profile.full_name || profile.email?.split("@")[0] || "Utilisateur";
   const avatarInitials = initials(
-    profile.full_name ?? profile.email?.split("@")[0] ?? "U"
+    profile.full_name || profile.email?.split("@")[0] || "U"
   );
   const classe = classesData.find((c) => c.id === profile.class_id);
   const roleLabel =

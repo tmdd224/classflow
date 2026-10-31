@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { CloudUpload, CheckCircle2 } from "lucide-react";
 import type { Course } from "../types";
 import {
@@ -21,12 +21,25 @@ export function UploadPage({
   onUploadComplete: () => void;
   onCancel: () => void;
 }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [course, setCourse] = useState("");
   const [description, setDescription] = useState("");
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function triggerFileInput() {
+    fileInputRef.current?.click();
+  }
+
+  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const selected = event.target.files?.[0] ?? null;
+    setFile(selected);
+    setError(null);
+    // Permet de resélectionner le même fichier à nouveau
+    event.target.value = "";
+  }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -129,16 +142,14 @@ export function UploadPage({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
+          onClick={triggerFileInput}
         >
           <input
+            ref={fileInputRef}
             type="file"
             className="upload-file-input"
-            accept=".pdf,.doc,.docx,.pptx"
-            onChange={(event) => {
-              const selected = event.target.files?.[0] ?? null;
-              setFile(selected);
-              setError(null);
-            }}
+            accept=".pdf,.docx,.pptx"
+            onChange={handleFileChange}
           />
 
           {file ? (
@@ -153,9 +164,13 @@ export function UploadPage({
               <button
                 type="button"
                 className="upload-change-button"
-                onClick={() => {
+                onClick={(event) => {
+                  event.stopPropagation();
                   setFile(null);
                   setError(null);
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = "";
+                  }
                 }}
               >
                 Changer de fichier
