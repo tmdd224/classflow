@@ -18,7 +18,8 @@
       "Bash(git commit -m 'Étape 2: remplacer les données statiques par les données Supabase *)",
       "Bash(git commit -m 'Fix: ordre des hooks React et design UploadPage *)",
       "Bash(git commit -m 'Fix: déplacer useEffect avant les retours conditionnels *)",
-      "Bash(git commit -m 'Fix: design soigné UploadPage avec zone dépôt drag-and-drop *)"
+      "Bash(git commit -m 'Fix: design soigné UploadPage avec zone dépôt drag-and-drop *)",
+      "Bash(git commit -m 'Fix: bouton choisir un fichier cliquable sur UploadPage *)"
     ]
   }
 }

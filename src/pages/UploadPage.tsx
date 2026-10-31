@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { CloudUpload, CheckCircle2, ArrowRight } from "lucide-react";
 import type { Course } from "../types";
 
@@ -11,10 +11,15 @@ export function UploadPage({
   onUpload: (file: File, course: string, description: string) => void;
   onCancel: () => void;
 }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [course, setCourse] = useState("");
   const [description, setDescription] = useState("");
   const [dragActive, setDragActive] = useState(false);
+
+  function triggerFileInput() {
+    fileInputRef.current?.click();
+  }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -72,8 +77,10 @@ export function UploadPage({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
+          onClick={triggerFileInput}
         >
           <input
+            ref={fileInputRef}
             type="file"
             className="upload-file-input"
             accept=".pdf,.doc,.docx"
