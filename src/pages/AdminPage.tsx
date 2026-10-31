@@ -2,7 +2,6 @@ import {
   Clock3,
   Edit3,
   FileText,
-  Lock,
   Plus,
   ShieldCheck,
   Users,
@@ -36,14 +35,15 @@ export function AdminPage({ uploadedDocuments }: AdminPageProps) {
 
   const disabledActions = (
     <>
-      <button className="primary-button" disabled>
-        <Plus size={15} /> Ajouter
-      </button>
-      <button className="text-button" disabled>
-        <Edit3 size={15} /> Modifier
-      </button>
+      <div className="admin-buttons">
+        <button className="primary-button" disabled>
+          <Plus size={15} /> Ajouter
+        </button>
+        <button className="text-button" disabled>
+          <Edit3 size={15} /> Modifier
+        </button>
+      </div>
       <span className="admin-locked">
-        <Lock size={13} />
         Disponible après l'authentification et la base de données
       </span>
     </>
@@ -117,14 +117,13 @@ export function AdminPage({ uploadedDocuments }: AdminPageProps) {
           <div className="admin-actions">{disabledActions}</div>
         </div>
 
-        <div className="document-table">
+        <div className="document-table admin-users">
           <div className="document-head">
             <span>NOM</span>
             <span>EMAIL</span>
             <span>RÔLE</span>
             <span>CLASSE</span>
             <span>STATUT</span>
-            <span />
           </div>
 
           {users.map((user: User) => (
@@ -134,7 +133,6 @@ export function AdminPage({ uploadedDocuments }: AdminPageProps) {
               <span>{roleLabels[user.role]}</span>
               <span>{user.classe ?? "—"}</span>
               <span>{user.status === "actif" ? "Actif" : "Inactif"}</span>
-              <span />
             </div>
           ))}
         </div>
@@ -150,13 +148,12 @@ export function AdminPage({ uploadedDocuments }: AdminPageProps) {
           <div className="admin-actions">{disabledActions}</div>
         </div>
 
-        <div className="document-table">
+        <div className="document-table admin-classes">
           <div className="document-head">
             <span>CLASSE</span>
             <span>NIVEAU</span>
             <span>EFFECTIF</span>
             <span>RESPONSABLE</span>
-            <span />
           </div>
 
           {classes.map((classe: Classe) => (
@@ -165,7 +162,6 @@ export function AdminPage({ uploadedDocuments }: AdminPageProps) {
               <span>{classe.niveau}</span>
               <span>{classe.effectif}</span>
               <span>{classe.responsable ?? "—"}</span>
-              <span />
             </div>
           ))}
         </div>
@@ -181,14 +177,13 @@ export function AdminPage({ uploadedDocuments }: AdminPageProps) {
           <div className="admin-actions">{disabledActions}</div>
         </div>
 
-        <div className="document-table">
+        <div className="document-table admin-courses">
           <div className="document-head">
             <span>NOM</span>
             <span>CODE</span>
             <span>RESPONSABLE</span>
             <span>PROGRESSION</span>
             <span>RESSOURCES</span>
-            <span />
           </div>
 
           {courses.map((course: Course) => (
@@ -198,7 +193,6 @@ export function AdminPage({ uploadedDocuments }: AdminPageProps) {
               <span>{course.responsable ?? "—"}</span>
               <span>{course.progress}%</span>
               <span>{course.resources}</span>
-              <span />
             </div>
           ))}
         </div>

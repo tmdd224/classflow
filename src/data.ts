@@ -1,4 +1,12 @@
-import { LayoutDashboard } from "lucide-react";
+import {
+  LayoutDashboard,
+  BookOpen,
+  FolderOpen,
+  CloudUpload,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
+import type { ComponentType } from "react";
 import type {
   DocumentItem,
   PageKey,
@@ -7,18 +15,20 @@ import type {
   Classe,
 } from "./types";
 
+type NavIcon = ComponentType<any>;
+
 export const navigation: {
   key: PageKey;
   label: string;
-  icon: typeof LayoutDashboard;
+  icon: NavIcon;
   roles: Role[];
 }[] = [
   { key: "overview", label: "Vue d’ensemble", icon: LayoutDashboard, roles: ["etudiant", "responsable", "administrateur"] },
-  { key: "courses", label: "Mes cours", icon: LayoutDashboard, roles: ["etudiant", "responsable", "administrateur"] },
-  { key: "documents", label: "Documents", icon: LayoutDashboard, roles: ["etudiant", "responsable", "administrateur"] },
-  { key: "upload", label: "Déposer un fichier", icon: LayoutDashboard, roles: ["etudiant", "responsable", "administrateur"] },
-  { key: "validation", label: "Validations", icon: LayoutDashboard, roles: ["etudiant", "responsable", "administrateur"] },
-  { key: "administration", label: "Administration", icon: LayoutDashboard, roles: ["administrateur"] },
+  { key: "courses", label: "Mes cours", icon: BookOpen, roles: ["etudiant", "responsable", "administrateur"] },
+  { key: "documents", label: "Documents", icon: FolderOpen, roles: ["etudiant", "responsable", "administrateur"] },
+  { key: "upload", label: "Déposer un fichier", icon: CloudUpload, roles: ["etudiant", "responsable", "administrateur"] },
+  { key: "validation", label: "Validations", icon: ShieldCheck, roles: ["etudiant", "responsable", "administrateur"] },
+  { key: "administration", label: "Administration", icon: Users, roles: ["administrateur"] },
 ];
 
 export const documents: DocumentItem[] = [

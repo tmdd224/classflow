@@ -606,3 +606,54 @@
   margin: 0 1px 16px;
   text-align: center;
 }
+
+/* ===== ADMINISTRATION ===== */
+.admin-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.admin-buttons {
+  display: flex;
+  gap: 8px;
+}
+.admin-buttons button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.admin-locked {
+  font-size: 10px;
+  color: #8d8798;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+/* Grilles dédiées par tableau admin (évite le débordement de la grille 5 colonnes) */
+.document-table.admin-users .document-head,
+.document-table.admin-users .document-row {
+  grid-template-columns: minmax(170px, 2fr) 1.7fr 1.1fr 1.1fr 1fr;
+}
+.document-table.admin-classes .document-head,
+.document-table.admin-classes .document-row {
+  grid-template-columns: minmax(200px, 2fr) 1fr 1fr 1.5fr;
+}
+.document-table.admin-courses .document-head,
+.document-table.admin-courses .document-row {
+  grid-template-columns: minmax(180px, 2fr) 1fr 1.3fr 1fr 1fr;
+}
+
+@media (max-width: 760px) {
+  .document-table.admin-users .document-head,
+  .document-table.admin-classes .document-head,
+  .document-table.admin-courses .document-head {
+    display: none;
+  }
+  .document-table.admin-users .document-row,
+  .document-table.admin-classes .document-row,
+  .document-table.admin-courses .document-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+}

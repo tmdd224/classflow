@@ -216,7 +216,9 @@ function App() {
 
             <div className="profile-copy">
               <strong>Thierno D.</strong>
-              <span>{roleLabels[role]} · L3 IA</span>
+              <span>
+                {role === "etudiant" ? `${roleLabels[role]} · L3 IA` : roleLabels[role]}
+              </span>
             </div>
 
             <MoreHorizontal size={19} className="muted-icon" />
