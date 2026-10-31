@@ -9,15 +9,14 @@ import {
   Clock3,
   FileText,
   MoreHorizontal,
+  ShieldCheck,
   Sparkles,
-  Users,
 } from "lucide-react";
 import { downloadDocument } from "../data";
 import { ActivityItem } from "../components/ActivityItem";
 import { StatCard } from "../components/StatCard";
 import type {
   Course,
-  CourseResource,
   DocumentItem,
   PageKey,
 } from "../types";
@@ -25,21 +24,27 @@ import type {
 export function OverviewPage({
   courses,
   documents,
-  courseResources,
   uploadedDocuments,
   query,
   navigate,
   onSelectCourse,
+  currentUserName,
 }: {
   courses: Course[];
   documents: DocumentItem[];
-  courseResources: Record<string, CourseResource[]>;
   uploadedDocuments: DocumentItem[];
   query: string;
   navigate: (page: PageKey) => void;
   onSelectCourse: (code: string) => void;
+  currentUserName: string;
 }) {
-  const pendingCount = uploadedDocuments.filter(
+  const firstName = currentUserName.split(" ")[0];
+
+  const myDocuments = uploadedDocuments.filter(
+    (doc) => doc.uploadedBy === currentUserName
+  );
+
+  const myPending = myDocuments.filter(
     (doc) => !doc.status || doc.status === "pending"
   ).length;
 
@@ -48,6 +53,10 @@ export function OverviewPage({
       .toLowerCase()
       .includes(query.toLowerCase())
   );
+
+  const recentDocuments = [...documents]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 3);
 
   return (
     <>
@@ -58,7 +67,7 @@ export function OverviewPage({
           </div>
 
           <h1>
-            Bonjour, Thierno <span>✦</span>
+            Bonjour, {firstName} <span>✦</span>
           </h1>
 
           <p className="page-subtitle">
@@ -127,7 +136,7 @@ export function OverviewPage({
         <StatCard
           icon={<BookOpen />}
           label="Cours actifs"
-          value="03"
+          value={String(courses.length)}
           note="Ton programme actuel"
           tone="purple"
         />
@@ -135,7 +144,7 @@ export function OverviewPage({
         <StatCard
           icon={<FileText />}
           label="Ressources"
-          value={String(Object.values(courseResources).flat().length + uploadedDocuments.length)}
+          value={String(documents.length + uploadedDocuments.length)}
           note="Ressources disponibles"
           tone="blue"
         />
@@ -143,7 +152,7 @@ export function OverviewPage({
         <StatCard
           icon={<CloudUpload />}
           label="Mes dépôts"
-          value={String(uploadedDocuments.length).padStart(2, "0")}
+          value={String(myDocuments.length).padStart(2, "0")}
           note="Documents partagés"
           tone="orange"
         />
@@ -151,7 +160,7 @@ export function OverviewPage({
         <StatCard
           icon={<Clock3 />}
           label="En attente"
-          value={String(pendingCount).padStart(2, "0")}
+          value={String(myPending).padStart(2, "0")}
           note="À faire valider"
           tone="green"
         />
@@ -174,41 +183,43 @@ export function OverviewPage({
           </div>
 
           <div className="course-list">
-            {courses.map((course) => (
-              <button
-                className="course-row"
-                key={course.code}
-                onClick={() => {
-                  onSelectCourse(course.code);
-                  navigate("courses");
-                }}
-              >
-                <div className={`course-icon ${course.color}`}>
-                  {course.initials}
-                </div>
+            {courses.map((course) => {
+              const validatedDocs = documents.filter(
+                (doc) => doc.course === course.name
+              ).length;
 
-                <div className="course-info">
-                  <div className="course-title-line">
-                    <strong>{course.name}</strong>
-                    <span>{course.resources} ressources</span>
+              return (
+                <button
+                  className="course-row"
+                  key={course.code}
+                  onClick={() => {
+                    onSelectCourse(course.code);
+                    navigate("courses");
+                  }}
+                >
+                  <div className={`course-icon ${course.color}`}>
+                    {course.initials}
                   </div>
 
-                  <div className="progress-track">
-                    <div
-                      className={`progress-fill ${course.color}`}
-                      style={{ width: `${course.progress}%` }}
-                    />
+                  <div className="course-info">
+                    <div className="course-title-line">
+                      <strong>{course.name}</strong>
+                      <span>
+                        {validatedDocs} document{
+                          validatedDocs > 1 ? "s" : ""
+                        }
+                      </span>
+                    </div>
+
+                    <div className="course-meta">
+                      <span>{course.code}</span>
+                    </div>
                   </div>
 
-                  <div className="course-meta">
-                    <span>{course.code}</span>
-                    <span>{course.progress}% parcouru</span>
-                  </div>
-                </div>
-
-                <ChevronRight size={17} className="muted-icon" />
-              </button>
-            ))}
+                  <ChevronRight size={17} className="muted-icon" />
+                </button>
+              );
+            })}
           </div>
         </section>
 
@@ -226,31 +237,29 @@ export function OverviewPage({
             </button>
           </div>
 
-          <div className="activity-list">
-            <ActivityItem
-              icon={<FileText />}
-              title="Introduction au Big Data"
-              detail="Ajouté dans Big Data"
-              time="Il y a 2 h"
-              tone="purple"
-            />
-
-            <ActivityItem
-              icon={<Users />}
-              title="Nouveau cours disponible"
-              detail="Développement Web"
-              time="Hier"
-              tone="blue"
-            />
-
-            <ActivityItem
-              icon={<CheckCircle2 />}
-              title="Document validé"
-              detail="Exercices Python"
-              time="28 oct."
-              tone="green"
-            />
-          </div>
+          {recentDocuments.length === 0 ? (
+            <div className="validation-empty">
+              <ShieldCheck size={35} />
+              <h3>Aucune activité pour le moment</h3>
+              <p>
+                Les documents de cours apparaîtront ici dès qu’ils seront
+                disponibles.
+              </p>
+            </div>
+          ) : (
+            <div className="activity-list">
+              {recentDocuments.map((doc) => (
+                <ActivityItem
+                  key={doc.id}
+                  icon={<FileText />}
+                  title={doc.name}
+                  detail={doc.course}
+                  time={doc.date}
+                  tone={doc.color === "violet" ? "purple" : "blue"}
+                />
+              ))}
+            </div>
+          )}
 
           <button
             className="activity-footer"

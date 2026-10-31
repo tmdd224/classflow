@@ -27,7 +27,6 @@ import {
   dbToDocumentItem,
   dbToClasse,
   dbToUser,
-  buildCourseResources,
 } from "./lib/supabase";
 import { AdminPage } from "./pages/AdminPage";
 import { CoursesPage } from "./pages/CoursesPage";
@@ -136,8 +135,16 @@ function App() {
 
   const role: Role = profile.role;
 
-  // Dérive le registre des ressources par cours à partir des documents de la base
-  const courseResources = buildCourseResources(documentsData, coursesData);
+  const displayName =
+    profile.full_name ?? profile.email?.split("@")[0] ?? "Utilisateur";
+  const avatarInitials = initials(
+    profile.full_name ?? profile.email?.split("@")[0] ?? "U"
+  );
+  const classe = classesData.find((c) => c.id === profile.class_id);
+  const roleLabel =
+    role === "etudiant" && classe
+      ? `${roleLabels[role]} · ${classe.name}`
+      : roleLabels[role];
 
   const pageTitle =
     navigation.find((item) => item.key === activePage)?.label ?? "Paramètres";
@@ -183,7 +190,7 @@ function App() {
       color,
       description,
       file,
-      uploadedBy: "Thierno D.",
+      uploadedBy: displayName,
       status: "pending",
       reviewComment: "",
     };
@@ -216,16 +223,6 @@ function App() {
       )
     );
   }
-
-  const displayName =
-    profile.full_name ?? profile.email?.split("@")[0] ?? "Utilisateur";
-  const avatarInitials = initials(
-    profile.full_name ?? profile.email?.split("@")[0] ?? "U"
-  );
-  const roleLabel =
-    role === "etudiant" && profile.class_id
-      ? `${roleLabels[role]} · ${profile.class_id}`
-      : roleLabels[role];
 
   // Pendant le chargement des données depuis Supabase, affiche un indicateur
   if (dataLoading) {
@@ -385,7 +382,7 @@ function App() {
               <i />
             </button>
 
-            <div className="top-avatar">TD</div>
+            <div className="top-avatar">{avatarInitials}</div>
           </div>
         </header>
 
@@ -394,11 +391,11 @@ function App() {
             <OverviewPage
               courses={coursesData}
               documents={documentsData}
-              courseResources={courseResources}
               uploadedDocuments={uploadedDocuments}
               query={query}
               navigate={navigate}
               onSelectCourse={setSelectedCourse}
+              currentUserName={displayName}
             />
           ) : activePage === "courses" ? (
             <CoursesPage
