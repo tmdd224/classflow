@@ -6,7 +6,9 @@
       "Bash(grep -iE \"^\\(tsx|ts-node|esbuild|playwright|react-dom|vite\\)$\")",
       "Bash(timeout 60 npx tsx --version)",
       "Bash(npx tsx *)",
-      "Bash(echo \"TSC EXIT: $?\")"
+      "Bash(echo \"TSC EXIT: $?\")",
+      "Bash(git add *)",
+      "Bash(git commit -m 'Refactor : découpage d'\\\\''App.tsx en pages, types et données *)"
     ]
   }
 }
