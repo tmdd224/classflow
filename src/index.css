@@ -1,0 +1,22 @@
+:root {
+  --text-primary: #252235;
+  --text-secondary: #8d8798;
+  --text-muted: #777286;
+  --border: #eeedf3;
+  --surface: #ffffff;
+}
+
+#root {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  text-align: left;
+  border-inline: none;
+  min-height: 100svh;
+  display: block;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
