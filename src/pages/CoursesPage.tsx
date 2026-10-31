@@ -1,9 +1,5 @@
-import {
-  ArrowDownToLine,
-  ArrowRight,
-  FileText,
-} from "lucide-react";
-import { downloadDocument } from "../data";
+import { ArrowRight, FileText } from "lucide-react";
+import { getDocumentSignedUrl } from "../lib/supabase";
 import type { Course, DocumentItem } from "../types";
 
 export function CoursesPage({
@@ -11,13 +7,13 @@ export function CoursesPage({
   documents,
   selectedCourse,
   onSelectCourse,
-  uploadedDocuments,
+  userId,
 }: {
   courses: Course[];
   documents: DocumentItem[];
   selectedCourse: string | null;
   onSelectCourse: (code: string | null) => void;
-  uploadedDocuments: DocumentItem[];
+  userId: string;
 }) {
   // Construire les ressources par cours à partir des documents de la base
   const courseResources: Record<string, { name: string; type: string; date: string }[]> = {};
@@ -27,7 +23,7 @@ export function CoursesPage({
     }
     courseResources[doc.course].push({
       name: doc.name,
-      type: doc.type,
+      type: doc.mime_type,
       date: doc.date,
     });
   }
@@ -40,11 +36,22 @@ export function CoursesPage({
 
   const selected = courses.find((course) => course.code === selectedCourse);
 
+  async function handleDownload(doc: DocumentItem) {
+    const result = await getDocumentSignedUrl(doc.storage_path);
+    if (!result.ok) {
+      alert((result as { error: string }).error);
+      return;
+    }
+    window.location.href = result.url;
+  }
+
   if (selected) {
     const resources = courseResources[selected.name] ?? [];
 
-    const courseDeposits = uploadedDocuments.filter(
-      (doc) => doc.courseId === selected.code || doc.course === selected.name
+    const courseDeposits = documents.filter(
+      (doc) =>
+        doc.uploaded_by === userId &&
+        (doc.courseId === selected.code || doc.course === selected.name)
     );
 
     return (
@@ -101,7 +108,7 @@ export function CoursesPage({
                   )
                 }
               >
-                <ArrowDownToLine size={17} />
+                <ArrowRight size={17} />
               </button>
             </div>
           ))}
@@ -150,14 +157,14 @@ export function CoursesPage({
                   </span>
                   <span className="document-date">{doc.date}</span>
                   <span className="document-size">{doc.size}</span>
-                  {doc.file && (
-                    <button
-                      className="download-button"
-                      onClick={() => downloadDocument(doc)}
-                    >
-                      <ArrowDownToLine size={17} />
-                    </button>
-                  )}
+
+                  <button
+                    className="download-button"
+                    onClick={() => handleDownload(doc)}
+                    title="Télécharger"
+                  >
+                    <span>↓</span>
+                  </button>
                 </div>
               ))}
             </div>

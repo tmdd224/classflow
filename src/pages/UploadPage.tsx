@@ -1,37 +1,84 @@
-import { useState, useRef } from "react";
-import { CloudUpload, CheckCircle2, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { CloudUpload, CheckCircle2 } from "lucide-react";
 import type { Course } from "../types";
+import {
+  validateFile,
+  uploadDocumentToStorage,
+  insertDocument,
+  buildStoragePath,
+} from "../lib/supabase";
 
 export function UploadPage({
   courses,
-  onUpload,
+  userId,
+  classId,
+  onUploadComplete,
   onCancel,
 }: {
   courses: Course[];
-  onUpload: (file: File, course: string, description: string) => void;
+  userId: string;
+  classId: string | null;
+  onUploadComplete: () => void;
   onCancel: () => void;
 }) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [course, setCourse] = useState("");
   const [description, setDescription] = useState("");
   const [dragActive, setDragActive] = useState(false);
-
-  function triggerFileInput() {
-    fileInputRef.current?.click();
-  }
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setError(null);
 
     if (!file || !course) {
+      setError("Sélectionnez un fichier et un cours.");
       return;
     }
 
-    onUpload(file, course, description);
-    setFile(null);
-    setCourse("");
-    setDescription("");
+    const validation = validateFile(file);
+    if (!validation.ok) {
+      setError((validation as { error: string }).error);
+      return;
+    }
+
+    const courseRecord = courses.find((c) => c.name === course);
+    const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+    const storagePath = buildStoragePath(
+      courseRecord?.class_id ?? classId,
+      courseRecord?.id ?? "",
+      extension
+    );
+
+    setUploading(true);
+
+    uploadDocumentToStorage(file, storagePath, validation.mime_type)
+      .then(() =>
+        insertDocument({
+          title: file.name.replace(/\.[^/.]+$/, ""),
+          file_name: file.name,
+          storage_path: storagePath,
+          mime_type: validation.mime_type,
+          size_bytes: file.size,
+          description: description || null,
+          course_id: courseRecord?.id ?? null,
+          uploaded_by: userId,
+        })
+      )
+      .then(() => {
+        setUploading(false);
+        onUploadComplete();
+      })
+      .catch((err) => {
+        setUploading(false);
+        setError(
+          err instanceof Error
+            ? `Erreur inattendue : ${err.message}`
+            : "Erreur inattendue lors du dépôt."
+        );
+        // Le fichier n'est pas supprimé : la purge se fera côté serveur
+      });
   }
 
   function handleDragOver(event: React.DragEvent) {
@@ -51,6 +98,7 @@ export function UploadPage({
     const dropped = event.dataTransfer.files?.[0] ?? null;
     if (dropped) {
       setFile(dropped);
+      setError(null);
     }
   }
 
@@ -68,6 +116,10 @@ export function UploadPage({
             Sélectionnez un fichier, choisissez le cours de destination et
             envoyez votre dépôt pour validation.
           </p>
+
+          {error && (
+            <div className="upload-error">{error}</div>
+          )}
         </div>
       </div>
 
@@ -77,16 +129,15 @@ export function UploadPage({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          onClick={triggerFileInput}
         >
           <input
-            ref={fileInputRef}
             type="file"
             className="upload-file-input"
-            accept=".pdf,.doc,.docx"
+            accept=".pdf,.doc,.docx,.pptx"
             onChange={(event) => {
               const selected = event.target.files?.[0] ?? null;
               setFile(selected);
+              setError(null);
             }}
           />
 
@@ -102,7 +153,10 @@ export function UploadPage({
               <button
                 type="button"
                 className="upload-change-button"
-                onClick={() => setFile(null)}
+                onClick={() => {
+                  setFile(null);
+                  setError(null);
+                }}
               >
                 Changer de fichier
               </button>
@@ -129,7 +183,9 @@ export function UploadPage({
             >
               <option value="">Sélectionner un cours</option>
               {courses.map((c) => (
-                <option key={c.code} value={c.name}>{c.name}</option>
+                <option key={c.code} value={c.name}>
+                  {c.name}
+                </option>
               ))}
             </select>
           </div>
@@ -147,15 +203,20 @@ export function UploadPage({
         </div>
 
         <div className="upload-actions">
-          <button type="button" className="text-button" onClick={onCancel}>
+          <button
+            type="button"
+            className="text-button"
+            onClick={onCancel}
+            disabled={uploading}
+          >
             Annuler
           </button>
           <button
             type="submit"
             className="primary-button"
-            disabled={!file || !course}
+            disabled={!file || !course || uploading}
           >
-            Déposer le document <ArrowRight size={15} />
+            {uploading ? "Dépôt en cours…" : "Déposer le document"}
           </button>
         </div>
       </form>
@@ -164,6 +225,9 @@ export function UploadPage({
         <p>
           Votre document sera examiné par l'équipe pédagogique avant
           publication. Vous recevrez une notification une fois validé.
+        </p>
+        <p>
+          Formats acceptés : PDF, DOCX, PPTX. Taille maximale : 20 Mo.
         </p>
       </div>
     </div>

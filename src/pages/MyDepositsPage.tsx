@@ -1,35 +1,32 @@
-import {
-  ArrowDownToLine,
-  Clock3,
-  CheckCircle2,
-  FileText,
-  ShieldCheck,
-  X,
-} from "lucide-react";
 import { useState } from "react";
-import { downloadDocument } from "../data";
+import { Clock3, CheckCircle2, FileText, ShieldCheck, X } from "lucide-react";
 import type { DocumentItem } from "../types";
+import { getDocumentSignedUrl } from "../lib/supabase";
 
 export function MyDepositsPage({
-  uploadedDocuments,
+  documents,
+  userId,
 }: {
-  uploadedDocuments: DocumentItem[];
+  documents: DocumentItem[];
+  userId: string;
 }) {
   const [filter, setFilter] = useState("Tous");
 
-  const pending = uploadedDocuments.filter(
+  const myDocuments = documents.filter((doc) => doc.uploaded_by === userId);
+
+  const pending = myDocuments.filter(
     (doc) => !doc.status || doc.status === "pending"
   );
 
-  const approved = uploadedDocuments.filter(
+  const approved = myDocuments.filter(
     (doc) => doc.status === "approved"
   );
 
-  const rejected = uploadedDocuments.filter(
+  const rejected = myDocuments.filter(
     (doc) => doc.status === "rejected"
   );
 
-  const filteredDocuments = uploadedDocuments.filter((doc) => {
+  const filteredDocuments = myDocuments.filter((doc) => {
     if (filter === "En attente") {
       return !doc.status || doc.status === "pending";
     }
@@ -44,6 +41,15 @@ export function MyDepositsPage({
 
     return true;
   });
+
+  async function handleDownload(doc: DocumentItem) {
+    const result = await getDocumentSignedUrl(doc.storage_path);
+    if (!result.ok) {
+      alert((result as { error: string }).error);
+      return;
+    }
+    window.location.href = result.url;
+  }
 
   return (
     <div className="deposits-page">
@@ -123,7 +129,8 @@ export function MyDepositsPage({
                     <strong>{doc.name}</strong>
 
                     <span>
-                      {doc.type} · {doc.course} · {doc.date} · {doc.size}
+                      {doc.mime_type} · {doc.course} · {doc.date} ·
+                      {doc.size}
                     </span>
                   </div>
 
@@ -148,23 +155,20 @@ export function MyDepositsPage({
                   <p className="validation-description">{doc.description}</p>
                 )}
 
-                {doc.status === "rejected" && doc.reviewComment && (
+                {doc.status === "rejected" && (
                   <div className="validation-comment">
                     <strong>Motif du refus :</strong>
-                    <p>{doc.reviewComment}</p>
+                    <p>Ce document a été refusé par l'équipe pédagogique.</p>
                   </div>
                 )}
 
                 <div className="validation-actions">
-                  {doc.file && (
-                    <button
-                      className="reset-filters"
-                      onClick={() => downloadDocument(doc)}
-                    >
-                      <ArrowDownToLine size={16} />
-                      Télécharger
-                    </button>
-                  )}
+                  <button
+                    className="reset-filters"
+                    onClick={() => handleDownload(doc)}
+                  >
+                    <span>↓</span> Télécharger
+                  </button>
                 </div>
               </article>
             ))}

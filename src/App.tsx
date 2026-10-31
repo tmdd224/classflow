@@ -17,7 +17,7 @@ import "./App.css";
 import { useAuth } from "./auth/AuthContext";
 import { LoginPage } from "./pages/LoginPage";
 import { PendingActivationPage } from "./pages/PendingActivationPage";
-import { formatFileSize, navigation } from "./data";
+import { navigation } from "./data";
 import {
   fetchCoursesFromDB,
   fetchDocumentsFromDB,
@@ -64,7 +64,6 @@ function App() {
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [mobileMenu, setMobileMenu] = useState(false);
-  const [uploadedDocuments, setUploadedDocuments] = useState<DocumentItem[]>([]);
 
   // Données chargées depuis Supabase
   const [coursesData, setCoursesData] = useState<Course[]>([]);
@@ -153,9 +152,17 @@ function App() {
     item.roles.includes(role)
   );
 
-  const pendingCount = uploadedDocuments.filter(
-    (doc) => !doc.status || doc.status === "pending"
-  ).length;
+  async function refreshDocuments() {
+    try {
+      const result = await fetchDocumentsFromDB();
+      setDocumentsData(result.map(dbToDocumentItem));
+    } catch (error) {
+      console.error(
+        "Erreur lors du rechargement des documents:",
+        error
+      );
+    }
+  }
 
   function navigate(page: PageKey) {
     setActivePage(page);
@@ -164,64 +171,6 @@ function App() {
     if (page !== "courses") {
       setSelectedCourse(null);
     }
-  }
-
-  function handleUpload(file: File, course: string, description: string) {
-    const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
-    const type = extension.toUpperCase();
-
-    const color =
-      type === "PDF" ? "violet" : type === "DOCX" ? "blue" : "orange";
-
-    const courseRecord = coursesData.find((c) => c.name === course);
-
-    const newDocument: DocumentItem = {
-      id: crypto.randomUUID(),
-      name: file.name.replace(/\.[^/.]+$/, ""),
-      type,
-      course,
-      courseId: courseRecord?.code,
-      date: new Date().toLocaleDateString("fr-FR", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      }),
-      size: formatFileSize(file.size),
-      color,
-      description,
-      file,
-      uploadedBy: displayName,
-      status: "pending",
-      reviewComment: "",
-    };
-
-    setUploadedDocuments((previous) => [newDocument, ...previous]);
-    setQuery("");
-    navigate("documents");
-  }
-
-  function handleDeleteDocument(id: string) {
-    setUploadedDocuments((previous) =>
-      previous.filter((doc) => doc.id !== id)
-    );
-  }
-
-  function handleValidation(
-    id: string,
-    status: "approved" | "rejected",
-    comment = ""
-  ) {
-    setUploadedDocuments((previous) =>
-      previous.map((doc) =>
-        doc.id === id
-          ? {
-              ...doc,
-              status,
-              reviewComment: comment,
-            }
-          : doc
-      )
-    );
   }
 
   // Pendant le chargement des données depuis Supabase, affiche un indicateur
@@ -289,10 +238,6 @@ function App() {
                   ? "Mes dépôts"
                   : label}
               </span>
-
-              {key === "validation" && pendingCount > 0 && (
-                <span className="nav-count">{pendingCount}</span>
-              )}
             </button>
           ))}
         </nav>
@@ -391,11 +336,11 @@ function App() {
             <OverviewPage
               courses={coursesData}
               documents={documentsData}
-              uploadedDocuments={uploadedDocuments}
               query={query}
               navigate={navigate}
               onSelectCourse={setSelectedCourse}
               currentUserName={displayName}
+              userId={user?.id ?? ""}
             />
           ) : activePage === "courses" ? (
             <CoursesPage
@@ -403,28 +348,34 @@ function App() {
               documents={documentsData}
               selectedCourse={selectedCourse}
               onSelectCourse={setSelectedCourse}
-              uploadedDocuments={uploadedDocuments}
+              userId={user?.id ?? ""}
             />
           ) : activePage === "documents" ? (
             <DocumentsPage
               documents={documentsData}
-              uploadedDocuments={uploadedDocuments}
               query={query}
-              onDelete={handleDeleteDocument}
             />
           ) : activePage === "upload" ? (
             <UploadPage
               courses={coursesData}
-              onUpload={handleUpload}
+              userId={user?.id ?? ""}
+              classId={profile.class_id}
+              onUploadComplete={() => {
+                refreshDocuments();
+                navigate("documents");
+              }}
               onCancel={() => navigate("overview")}
             />
           ) : activePage === "validation" ? (
             role === "etudiant" ? (
-              <MyDepositsPage uploadedDocuments={uploadedDocuments} />
+              <MyDepositsPage
+                documents={documentsData}
+                userId={user?.id ?? ""}
+              />
             ) : (
               <ValidationPage
-                uploadedDocuments={uploadedDocuments}
-                onValidate={handleValidation}
+                documents={documentsData}
+                userId={user?.id ?? ""}
                 role={role}
               />
             )
@@ -432,7 +383,6 @@ function App() {
             <PlaceholderPage page="settings" title="Paramètres" />
           ) : activePage === "administration" ? (
             <AdminPage
-              uploadedDocuments={uploadedDocuments}
               users={profilesData}
               classes={classesData}
               courses={coursesData}

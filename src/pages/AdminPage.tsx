@@ -10,32 +10,28 @@ import { StatCard } from "../components/StatCard";
 import type { DocumentItem, User, Classe, Course } from "../types";
 import { roleLabels } from "../types";
 
-interface AdminPageProps {
-  uploadedDocuments: DocumentItem[];
-  users: User[];
-  classes: Classe[];
-  courses: Course[];
-  documents: DocumentItem[];
-}
-
 export function AdminPage({
-  uploadedDocuments,
   users,
   classes,
   courses,
   documents,
-}: AdminPageProps) {
-  const totalDocuments = uploadedDocuments.length + documents.length;
+}: {
+  users: User[];
+  classes: Classe[];
+  courses: Course[];
+  documents: DocumentItem[];
+}) {
+  const totalDocuments = documents.length;
 
-  const pending = uploadedDocuments.filter(
+  const pending = documents.filter(
     (doc) => !doc.status || doc.status === "pending"
   ).length;
 
-  const approved = uploadedDocuments.filter(
+  const approved = documents.filter(
     (doc) => doc.status === "approved"
   ).length;
 
-  const rejected = uploadedDocuments.filter(
+  const rejected = documents.filter(
     (doc) => doc.status === "rejected"
   ).length;
 

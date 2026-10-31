@@ -12,7 +12,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
-import { downloadDocument } from "../data";
+import { getDocumentSignedUrl } from "../lib/supabase";
 import { ActivityItem } from "../components/ActivityItem";
 import { StatCard } from "../components/StatCard";
 import type {
@@ -24,25 +24,23 @@ import type {
 export function OverviewPage({
   courses,
   documents,
-  uploadedDocuments,
   query,
   navigate,
   onSelectCourse,
   currentUserName,
+  userId,
 }: {
   courses: Course[];
   documents: DocumentItem[];
-  uploadedDocuments: DocumentItem[];
   query: string;
   navigate: (page: PageKey) => void;
   onSelectCourse: (code: string) => void;
   currentUserName: string;
+  userId: string;
 }) {
   const firstName = currentUserName.split(" ")[0];
 
-  const myDocuments = uploadedDocuments.filter(
-    (doc) => doc.uploadedBy === currentUserName
-  );
+  const myDocuments = documents.filter((doc) => doc.uploaded_by === userId);
 
   const myPending = myDocuments.filter(
     (doc) => !doc.status || doc.status === "pending"
@@ -57,6 +55,15 @@ export function OverviewPage({
   const recentDocuments = [...documents]
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 3);
+
+  async function handleDownload(doc: DocumentItem) {
+    const result = await getDocumentSignedUrl(doc.storage_path);
+    if (!result.ok) {
+      alert((result as { error: string }).error);
+      return;
+    }
+    window.location.href = result.url;
+  }
 
   return (
     <>
@@ -144,7 +151,7 @@ export function OverviewPage({
         <StatCard
           icon={<FileText />}
           label="Ressources"
-          value={String(documents.length + uploadedDocuments.length)}
+          value={String(documents.length)}
           note="Ressources disponibles"
           tone="blue"
         />
@@ -255,7 +262,7 @@ export function OverviewPage({
                   title={doc.name}
                   detail={doc.course}
                   time={doc.date}
-                  tone={doc.color === "violet" ? "purple" : "blue"}
+                  tone={doc.mime_type === "application/pdf" ? "purple" : "blue"}
                 />
               ))}
             </div>
@@ -294,10 +301,10 @@ export function OverviewPage({
             <span />
           </div>
 
-          {[...uploadedDocuments, ...filteredDocuments]
+          {filteredDocuments
             .slice(0, 5)
             .map((doc) => (
-              <div className="document-row" key={doc.id ?? doc.name}>
+              <div className="document-row" key={doc.id}>
                 <div className="document-name">
                   <div className={`file-icon ${doc.color}`}>
                     <FileText size={18} />
@@ -312,7 +319,7 @@ export function OverviewPage({
                 <button
                   className="download-button"
                   aria-label={`Télécharger ${doc.name}`}
-                  onClick={() => downloadDocument(doc)}
+                  onClick={() => handleDownload(doc)}
                 >
                   <ArrowDownToLine size={17} />
                 </button>

@@ -9,6 +9,7 @@ import type {
   Profile,
   User,
 } from "../types";
+import { formatFileSize } from "../data";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -102,6 +103,7 @@ export async function fetchProfilesFromDB(): Promise<Profile[]> {
  */
 export function dbToCourse(db: CourseDB): Course {
   return {
+    id: db.id,
     name: db.name,
     code: db.code,
     progress: db.progress,
@@ -109,6 +111,7 @@ export function dbToCourse(db: CourseDB): Course {
     color: db.color,
     initials: db.initials,
     responsable: db.responsable ?? undefined,
+    class_id: db.class_id ?? undefined,
   };
 }
 
@@ -116,17 +119,32 @@ export function dbToCourse(db: CourseDB): Course {
  * Convertit une ligne `documents` de Supabase en `DocumentItem` de l'application.
  */
 export function dbToDocumentItem(db: DocumentDB): DocumentItem {
+  const color =
+    db.mime_type === "application/pdf"
+      ? "violet"
+      : db.mime_type ===
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        ? "blue"
+        : db.mime_type ===
+          "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+          ? "orange"
+          : "gray";
+
   return {
     id: db.id,
-    name: db.name,
-    type: db.type,
+    name: db.title,
+    file_name: db.file_name,
+    storage_path: db.storage_path,
+    mime_type: db.mime_type,
+    size_bytes: db.size_bytes,
+    size: formatFileSize(db.size_bytes),
     course: db.course,
     courseId: db.course_id ?? undefined,
-    date: db.date,
-    size: db.size,
-    color: db.color,
-    status: "approved",
-    reviewComment: "",
+    date: db.created_at,
+    color,
+    uploaded_by: db.uploaded_by,
+    status: db.status,
+    description: db.description ?? undefined,
   };
 }
 
@@ -173,7 +191,7 @@ export function buildCourseResources(
     }
     resources[doc.course].push({
       name: doc.name,
-      type: doc.type,
+      type: doc.mime_type,
       date: doc.date,
     });
   }
@@ -186,5 +204,175 @@ export function buildCourseResources(
   }
 
   return resources;
+}
+
+/**
+ * Extensions autorisées côté client.
+ */
+export const ALLOWED_EXTENSIONS = ["pdf", "docx", "pptx"] as const;
+
+/**
+ * Taille maximale autorisée : 20 Mo.
+ */
+export const MAX_FILE_SIZE = 20 * 1024 * 1024;
+
+/**
+ * Déduit le mime_type à partir de l'extension du fichier.
+ * N'utilise pas file.type.
+ */
+export function mimeTypeFromExtension(extension: string): string | null {
+  switch (extension.toLowerCase()) {
+    case "pdf":
+      return "application/pdf";
+    case "docx":
+      return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    case "pptx":
+      return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+    default:
+      return null;
+  }
+}
+
+/**
+ * Valide un fichier côté client (extension + taille).
+ * Retourne { ok: true, mime_type } ou { ok: false, error }.
+ */
+export function validateFile(file: File): {
+  ok: true;
+  mime_type: string;
+} | { ok: false; error: string } {
+  const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+  const mime_type = mimeTypeFromExtension(extension);
+
+  if (!mime_type) {
+    return {
+      ok: false,
+      error: "Extension non autorisée. Seuls les fichiers PDF, DOCX et PPTX sont acceptés.",
+    };
+  }
+
+  if (file.size > MAX_FILE_SIZE) {
+    return {
+      ok: false,
+      error: `Fichier trop volumineux (${formatFileSize(file.size)}). Taille maximale : 20 Mo.`,
+    };
+  }
+
+  return { ok: true, mime_type };
+}
+
+/**
+ * Construit le chemin de stockage dans le bucket « documents » :
+ * {class_id}/{course_id}/{uuid}.{extension}
+ */
+export function buildStoragePath(
+  classId: string | null | undefined,
+  courseId: string,
+  extension: string
+): string {
+  const safeClassId = classId ?? "inconnu";
+  const uuid = crypto.randomUUID();
+  return `${safeClassId}/${courseId}/${uuid}.${extension}`;
+}
+
+/**
+ * Envoie un fichier dans le bucket privé « documents » de Supabase Storage.
+ */
+export async function uploadDocumentToStorage(
+  file: File,
+  storagePath: string,
+  mimeType: string
+): Promise<{ ok: true; path: string } | { ok: false; error: string }> {
+  const { error } = await supabase.storage
+    .from("documents")
+    .upload(storagePath, file, {
+      contentType: mimeType,
+      upsert: false,
+    });
+
+  if (error) {
+    return {
+      ok: false,
+      error:
+        error.message.includes("permission") ||
+        error.message.includes("droit") ||
+        error.message.includes("forbidden")
+          ? "Droit refusé pour l'envoi au stockage."
+          : `Erreur de stockage : ${error.message}`,
+    };
+  }
+
+  return { ok: true, path: storagePath };
+}
+
+/**
+ * Insère une ligne dans la table `documents` avec les colonnes autorisées.
+ * N'envoie ni status, ni visibility, ni class_id : gérées par la base.
+ */
+export async function insertDocument(document: {
+  title: string;
+  file_name: string;
+  storage_path: string;
+  mime_type: string;
+  size_bytes: number;
+  description: string | null;
+  course_id: string | null;
+  uploaded_by: string;
+}): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  const { data, error } = await supabase
+    .from("documents")
+    .insert([
+      {
+        title: document.title,
+        file_name: document.file_name,
+        storage_path: document.storage_path,
+        mime_type: document.mime_type,
+        size_bytes: document.size_bytes,
+        description: document.description,
+        course_id: document.course_id,
+        uploaded_by: document.uploaded_by,
+      },
+    ])
+    .select("id")
+    .single();
+
+  if (error) {
+    return {
+      ok: false,
+      error:
+        error.message.includes("permission") ||
+        error.message.includes("droit") ||
+        error.message.includes("forbidden")
+          ? "Droit refusé pour l'enregistrement en base."
+          : `Erreur d'enregistrement : ${error.message}`,
+    };
+  }
+
+  return { ok: true, id: data.id };
+}
+
+/**
+ * Crée une URL signée valide 60 secondes pour télécharger un document.
+ */
+export async function getDocumentSignedUrl(
+  storagePath: string
+): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  const { data, error } = await supabase.storage
+    .from("documents")
+    .createSignedUrl(storagePath, 60);
+
+  if (error) {
+    return {
+      ok: false,
+      error:
+        error.message.includes("permission") ||
+        error.message.includes("droit") ||
+        error.message.includes("forbidden")
+          ? "Droit refusé pour le téléchargement."
+          : `Erreur de téléchargement : ${error.message}`,
+    };
+  }
+
+  return { ok: true, url: data.signedUrl };
 }
 

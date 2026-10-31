@@ -20,6 +20,7 @@ export const roleLabels: Record<Role, string> = {
 export type CourseResource = { name: string; type: string; date: string };
 
 export type Course = {
+  id: string;
   name: string;
   code: string;
   progress: number;
@@ -27,6 +28,7 @@ export type Course = {
   color: string;
   initials: string;
   responsable?: string;
+  class_id?: string;
 };
 
 export type User = {
@@ -47,19 +49,20 @@ export type Classe = {
 };
 
 export type DocumentItem = {
-  id?: string;
+  id: string;
   name: string;
-  type: string;
-  course: string;
-  courseId?: string;
-  date: string;
+  file_name: string;
+  storage_path: string;
+  mime_type: string;
+  size_bytes: number;
   size: string;
+  course: string;
+  courseId: string | undefined;
+  date: string;
   color: string;
+  uploaded_by: string;
+  status: DocumentStatus;
   description?: string;
-  file?: File;
-  uploadedBy?: string;
-  status?: DocumentStatus;
-  reviewComment?: string;
 };
 
 export type Profile = {
@@ -81,19 +84,25 @@ export type CourseDB = {
   color: string;
   initials: string;
   responsable: string | null;
+  class_id: string | null;
 };
 
 /** Ligne de la table `documents` dans Supabase. */
 export type DocumentDB = {
   id: string;
-  name: string;
-  type: string;
-  course: string;
+  title: string;
+  file_name: string;
+  storage_path: string;
+  mime_type: string;
+  size_bytes: number;
+  description: string | null;
   course_id: string | null;
-  date: string;
-  size: string;
-  color: string;
-  storage_path: string | null;
+  course: string;
+  uploaded_by: string;
+  status: DocumentStatus;
+  visibility: string;
+  class_id: string | null;
+  created_at: string;
 };
 
 /** Ligne de la table `classes` dans Supabase. */

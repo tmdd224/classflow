@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import type { ComponentType } from "react";
 import type {
-  DocumentItem,
   PageKey,
   Role,
 } from "./types";
@@ -35,25 +34,4 @@ export function formatFileSize(bytes: number) {
   }
 
   return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
-}
-
-export function downloadDocument(doc: DocumentItem) {
-  if (!doc.file) {
-    alert(
-      "Ce document est une donnée de démonstration. Seuls les fichiers que tu as déposés peuvent être téléchargés pour le moment."
-    );
-    return;
-  }
-
-  const url = URL.createObjectURL(doc.file);
-  const link = document.createElement("a");
-
-  link.href = url;
-  link.download = doc.file.name;
-
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-
-  URL.revokeObjectURL(url);
 }

@@ -1,78 +1,60 @@
-import {
-  ArrowDownToLine,
-  CheckCircle2,
-  Clock3,
-  FileText,
-  ShieldCheck,
-  X,
-} from "lucide-react";
 import { useState } from "react";
-import { downloadDocument } from "../data";
+import { Clock3, CheckCircle2, FileText, ShieldCheck, X } from "lucide-react";
 import type { DocumentItem, Role } from "../types";
+import { getDocumentSignedUrl } from "../lib/supabase";
 
 export function ValidationPage({
-  uploadedDocuments,
-  onValidate,
+  documents,
+  userId,
   role,
 }: {
-  uploadedDocuments: DocumentItem[];
-  onValidate: (
-    id: string,
-    status: "approved" | "rejected",
-    comment?: string
-  ) => void;
+  documents: DocumentItem[];
+  userId: string;
   role: Role;
 }) {
-  const [comments, setComments] = useState<Record<string, string>>({});
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [filter, setFilter] = useState("Tous");
 
-  const pending = uploadedDocuments.filter(
+  const isEtudiant = role === "etudiant";
+
+  const visibleDocuments = isEtudiant
+    ? documents.filter((doc) => doc.uploaded_by === userId)
+    : documents;
+
+  const pending = visibleDocuments.filter(
     (doc) => !doc.status || doc.status === "pending"
   );
 
-  const approved = uploadedDocuments.filter(
+  const approved = visibleDocuments.filter(
     (doc) => doc.status === "approved"
   );
 
-  const rejected = uploadedDocuments.filter(
+  const rejected = visibleDocuments.filter(
     (doc) => doc.status === "rejected"
   );
 
-  const filteredDocuments = uploadedDocuments.filter((doc) => {
-    let matchesFilter = true;
-
+  const filteredDocuments = visibleDocuments.filter((doc) => {
     if (filter === "En attente") {
-      matchesFilter = !doc.status || doc.status === "pending";
-    } else if (filter === "Validés") {
-      matchesFilter = doc.status === "approved";
-    } else if (filter === "Refusés") {
-      matchesFilter = doc.status === "rejected";
+      return !doc.status || doc.status === "pending";
     }
 
-    const matchesRole = role !== "etudiant" || doc.file !== undefined;
+    if (filter === "Validés") {
+      return doc.status === "approved";
+    }
 
-    return matchesFilter && matchesRole;
+    if (filter === "Refusés") {
+      return doc.status === "rejected";
+    }
+
+    return true;
   });
 
-  function rejectDocument(id: string) {
-    const comment = comments[id]?.trim() ?? "";
-
-    if (!comment) {
-      setErrors((previous) => ({
-        ...previous,
-        [id]: "Ajoute un commentaire pour expliquer le refus.",
-      }));
-
+  async function handleDownload(doc: DocumentItem) {
+    const result = await getDocumentSignedUrl(doc.storage_path);
+    if (!result.ok) {
+      alert((result as { error: string }).error);
       return;
     }
-
-    onValidate(id, "rejected", comment);
-
-    setErrors((previous) => ({
-      ...previous,
-      [id]: "",
-    }));
+    window.location.href = result.url;
   }
 
   return (
@@ -153,7 +135,8 @@ export function ValidationPage({
                     <strong>{doc.name}</strong>
 
                     <span>
-                      {doc.type} · {doc.course} · {doc.date} · {doc.size}
+                      {doc.mime_type} · {doc.course} · {doc.date} ·
+                      {doc.size}
                     </span>
                   </div>
 
@@ -178,90 +161,14 @@ export function ValidationPage({
                   <p className="validation-description">{doc.description}</p>
                 )}
 
-                {doc.status === "rejected" && doc.reviewComment && (
-                  <div className="validation-comment">
-                    <strong>Motif du refus :</strong>
-                    <p>{doc.reviewComment}</p>
-                  </div>
-                )}
-
-                {doc.status === "pending" || !doc.status ? (
-                  <div className="validation-review">
-                    <div className="upload-field">
-                      <label htmlFor={`comment-${doc.id}`}>
-                        Commentaire en cas de refus
-                      </label>
-
-                      <textarea
-                        id={`comment-${doc.id}`}
-                        rows={2}
-                        value={comments[doc.id!] ?? ""}
-                        onChange={(event) => {
-                          setComments((previous) => ({
-                            ...previous,
-                            [doc.id!]: event.target.value,
-                          }));
-
-                          setErrors((previous) => ({
-                            ...previous,
-                            [doc.id!]: "",
-                          }));
-                        }}
-                        placeholder="Exemple : Document illisible, merci de le déposer à nouveau..."
-                      />
-
-                      {errors[doc.id!] && (
-                        <p className="upload-error">
-                          {errors[doc.id!]}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="validation-actions">
-                      {doc.file && (
-                        <button
-                          className="reset-filters"
-                          onClick={() => downloadDocument(doc)}
-                        >
-                          <ArrowDownToLine size={16} />
-                          Télécharger
-                        </button>
-                      )}
-
-                      {role !== "etudiant" && (
-                        <>
-                          <button
-                            className="reject-button"
-                            onClick={() => rejectDocument(doc.id!)}
-                          >
-                            <X size={16} />
-                            Refuser
-                          </button>
-
-                          <button
-                            className="approve-button"
-                            onClick={() => onValidate(doc.id!, "approved")}
-                          >
-                            <CheckCircle2 size={16} />
-                            Valider
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="validation-actions">
-                    {doc.file && (
-                      <button
-                        className="reset-filters"
-                        onClick={() => downloadDocument(doc)}
-                      >
-                        <ArrowDownToLine size={16} />
-                        Télécharger
-                      </button>
-                    )}
-                  </div>
-                )}
+                <div className="validation-actions">
+                  <button
+                    className="reset-filters"
+                    onClick={() => handleDownload(doc)}
+                  >
+                    <span>↓</span> Télécharger
+                  </button>
+                </div>
               </article>
             ))}
           </div>

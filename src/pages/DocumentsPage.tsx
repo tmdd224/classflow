@@ -1,24 +1,17 @@
-import {
-  ArrowDownToLine,
-  FileText,
-} from "lucide-react";
-import { downloadDocument } from "../data";
+import { FileText } from "lucide-react";
 import type { DocumentItem } from "../types";
+import { getDocumentSignedUrl } from "../lib/supabase";
 
 export function DocumentsPage({
   documents,
-  uploadedDocuments,
   query,
-  onDelete,
 }: {
   documents: DocumentItem[];
-  uploadedDocuments: DocumentItem[];
   query: string;
-  onDelete: (id: string) => void;
 }) {
   const search = query.toLowerCase().trim();
 
-  const library = [...uploadedDocuments, ...documents];
+  const library = [...documents];
 
   const filtered = library.filter((doc) => {
     const matchesSearch = search
@@ -26,6 +19,15 @@ export function DocumentsPage({
       : true;
     return matchesSearch;
   });
+
+  async function handleDownload(doc: DocumentItem) {
+    const result = await getDocumentSignedUrl(doc.storage_path);
+    if (!result.ok) {
+      alert((result as { error: string }).error);
+      return;
+    }
+    window.location.href = result.url;
+  }
 
   return (
     <div className="documents-page">
@@ -47,7 +49,9 @@ export function DocumentsPage({
         <div className="section-heading">
           <div>
             <span className="section-kicker">RESSOURCES DISPONIBLES</span>
-            <h3>{filtered.length} document{filtered.length > 1 ? "s" : ""}</h3>
+            <h3>
+              {filtered.length} document{filtered.length > 1 ? "s" : ""}
+            </h3>
           </div>
         </div>
 
@@ -56,6 +60,7 @@ export function DocumentsPage({
             <span>NOM DU DOCUMENT</span>
             <span>TYPE</span>
             <span>COURS</span>
+            <span>STATUT</span>
             <span>DATE</span>
             <span>TAILLE</span>
             <span />
@@ -70,39 +75,33 @@ export function DocumentsPage({
                 <strong>{doc.name}</strong>
               </div>
 
-              <span className="document-course">{doc.type}</span>
+              <span className="document-course">{doc.mime_type}</span>
               <span className="document-course">{doc.course}</span>
+              <span
+                className={`document-status ${
+                  doc.status === "approved"
+                    ? "approved"
+                    : doc.status === "rejected"
+                      ? "rejected"
+                      : "pending"
+                }`}
+              >
+                {doc.status === "approved"
+                  ? "Validé"
+                  : doc.status === "rejected"
+                    ? "Refusé"
+                    : "En attente"}
+              </span>
               <span className="document-date">{doc.date}</span>
               <span className="document-size">{doc.size}</span>
 
-              {doc.file ? (
-                <>
-                  <button
-                    className="download-button"
-                    onClick={() => downloadDocument(doc)}
-                  >
-                    <ArrowDownToLine size={17} />
-                  </button>
-                  <button
-                    className="download-button"
-                    onClick={() => onDelete(doc.id!)}
-                    title="Supprimer"
-                  >
-                    <span style={{ color: "#ef4444" }}>&times;</span>
-                  </button>
-                </>
-              ) : (
-                <button
-                  className="download-button"
-                  onClick={() =>
-                    alert(
-                      "Le téléchargement de cette ressource de la base sera disponible après connexion au stockage."
-                    )
-                  }
-                >
-                  <ArrowDownToLine size={17} />
-                </button>
-              )}
+              <button
+                className="download-button"
+                onClick={() => handleDownload(doc)}
+                title="Télécharger"
+              >
+                <span>↓</span>
+              </button>
             </div>
           ))}
         </div>
@@ -125,6 +124,7 @@ export function DocumentsPage({
               <span>NOM DU DOCUMENT</span>
               <span>TYPE</span>
               <span>COURS</span>
+              <span>STATUT</span>
               <span>DATE</span>
               <span>TAILLE</span>
               <span />
@@ -139,20 +139,32 @@ export function DocumentsPage({
                   <strong>{doc.name}</strong>
                 </div>
 
-                <span className="document-course">{doc.type}</span>
+                <span className="document-course">{doc.mime_type}</span>
                 <span className="document-course">{doc.course}</span>
+                <span
+                  className={`document-status ${
+                    doc.status === "approved"
+                      ? "approved"
+                      : doc.status === "rejected"
+                        ? "rejected"
+                        : "pending"
+                  }`}
+                >
+                  {doc.status === "approved"
+                    ? "Validé"
+                    : doc.status === "rejected"
+                      ? "Refusé"
+                      : "En attente"}
+                </span>
                 <span className="document-date">{doc.date}</span>
                 <span className="document-size">{doc.size}</span>
 
                 <button
                   className="download-button"
-                  onClick={() =>
-                    alert(
-                      "Le téléchargement de cette ressource de la base sera disponible après connexion au stockage."
-                    )
-                  }
+                  onClick={() => handleDownload(doc)}
+                  title="Télécharger"
                 >
-                  <ArrowDownToLine size={17} />
+                  <span>↓</span>
                 </button>
               </div>
             ))}
