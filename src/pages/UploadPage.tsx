@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ArrowDownToLine, Upload } from "lucide-react";
 import type { Course } from "../types";
 
 export function UploadPage({
@@ -44,64 +45,83 @@ export function UploadPage({
         </div>
       </div>
 
-      <form className="panel upload-panel" onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label className="form-label">Fichier</label>
-          <input
-            type="file"
-            className="form-file"
-            accept=".pdf,.doc,.docx"
-            onChange={(event) => {
-              const selected = event.target.files?.[0] ?? null;
-              setFile(selected);
-            }}
-          />
+      <section className="panel upload-panel">
+        <div className="section-heading">
+          <div>
+            <span className="section-kicker">FORMULAIRE DE DÉPÔT</span>
+            <h3>Nouveau document</h3>
+          </div>
         </div>
 
-        <div className="form-group">
-          <label className="form-label">Cours de destination</label>
-          <select
-            className="form-select"
-            value={course}
-            onChange={(event) => setCourse(event.target.value)}
-          >
-            <option value="">Sélectionner un cours</option>
-            {courses.map((c) => (
-              <option key={c.code} value={c.name}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label className="form-label">Fichier</label>
+            <div className="file-input-wrapper">
+              <input
+                type="file"
+                className="form-file"
+                accept=".pdf,.doc,.docx"
+                onChange={(event) => {
+                  const selected = event.target.files?.[0] ?? null;
+                  setFile(selected);
+                }}
+              />
+              <span className="file-label">
+                {file ? file.name : "Choisir un fichier"}
+              </span>
+            </div>
+          </div>
 
-        <div className="form-group">
-          <label className="form-label">Description</label>
-          <textarea
-            className="form-textarea"
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            placeholder="Précisez le contenu de ce dépôt…"
-          />
-        </div>
+          <div className="form-group">
+            <label className="form-label">Cours de destination</label>
+            <div className="select-wrapper">
+              <select
+                className="form-select"
+                value={course}
+                onChange={(event) => setCourse(event.target.value)}
+              >
+                <option value="">Sélectionner un cours</option>
+                {courses.map((c) => (
+                  <option key={c.code} value={c.name}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              <ArrowDownToLine size={16} className="select-arrow" />
+            </div>
+          </div>
 
-        <div className="form-actions">
-          <button type="button" className="btn-secondary" onClick={onCancel}>
-            Annuler
-          </button>
-          <button
-            type="submit"
-            className="btn-primary"
-            disabled={!file || !course}
-          >
-            Déposer le document
-          </button>
-        </div>
+          <div className="form-group">
+            <label className="form-label">Description</label>
+            <textarea
+              className="form-textarea"
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder="Précisez le contenu de ce dépôt…"
+              rows={3}
+            />
+          </div>
+
+          <div className="form-actions">
+            <button type="button" className="btn-secondary" onClick={onCancel}>
+              Annuler
+            </button>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={!file || !course}
+            >
+              <Upload size={16} />
+              Déposer le document
+            </button>
+          </div>
+        </form>
 
         <p className="form-note">
           Votre document sera examiné par l'équipe pédagogique avant
           publication. Vous recevrez une notification une fois validé.
         </p>
-      </form>
+      </section>
     </div>
   );
 }

@@ -59,6 +59,21 @@ function initials(source: string) {
 function App() {
   const { user, profile, loading, signOut } = useAuth();
 
+  // Tous les hooks doivent être appelés avant tout retour conditionnel
+  // pour respecter les Règles des Hooks React.
+  const [activePage, setActivePage] = useState<PageKey>("overview");
+  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [mobileMenu, setMobileMenu] = useState(false);
+  const [uploadedDocuments, setUploadedDocuments] = useState<DocumentItem[]>([]);
+
+  // Données chargées depuis Supabase
+  const [coursesData, setCoursesData] = useState<Course[]>([]);
+  const [documentsData, setDocumentsData] = useState<DocumentItem[]>([]);
+  const [classesData, setClassesData] = useState<Classe[]>([]);
+  const [profilesData, setProfilesData] = useState<User[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
+
   // Gestion de l'authentification Supabase.
   // 1. Tant que la session n'est pas chargée -> état de chargement.
   // 2. Sans session -> page de connexion uniquement.
@@ -80,19 +95,6 @@ function App() {
   }
 
   const role: Role = profile.role;
-
-  const [activePage, setActivePage] = useState<PageKey>("overview");
-  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
-  const [mobileMenu, setMobileMenu] = useState(false);
-  const [uploadedDocuments, setUploadedDocuments] = useState<DocumentItem[]>([]);
-
-  // Données chargées depuis Supabase
-  const [coursesData, setCoursesData] = useState<Course[]>([]);
-  const [documentsData, setDocumentsData] = useState<DocumentItem[]>([]);
-  const [classesData, setClassesData] = useState<Classe[]>([]);
-  const [profilesData, setProfilesData] = useState<User[]>([]);
-  const [dataLoading, setDataLoading] = useState(true);
 
   // Chargement des données depuis Supabase dès que le profil est actif
   useEffect(() => {

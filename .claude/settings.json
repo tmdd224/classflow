@@ -15,7 +15,8 @@
       "Bash(git check-ignore *)",
       "Bash(echo \"exit: $?\")",
       "Bash(git commit -m 'feat\\(auth\\) : connexion Supabase \\(étape 1\\) *)",
-      "Bash(git commit -m 'Étape 2: remplacer les données statiques par les données Supabase *)"
+      "Bash(git commit -m 'Étape 2: remplacer les données statiques par les données Supabase *)",
+      "Bash(git commit -m 'Fix: ordre des hooks React et design UploadPage *)"
     ]
   }
 }
