@@ -74,29 +74,8 @@ function App() {
   const [profilesData, setProfilesData] = useState<User[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
 
-  // Gestion de l'authentification Supabase.
-  // 1. Tant que la session n'est pas chargée -> état de chargement.
-  // 2. Sans session -> page de connexion uniquement.
-  // 3. Profil introuvable ou compte non actif -> écran d'attente d'activation.
-  if (loading) {
-    return (
-      <div className="page-content" style={{ height: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        Chargement de votre session…
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <LoginPage />;
-  }
-
-  if (!profile || !profile.active) {
-    return <PendingActivationPage onLogout={signOut} />;
-  }
-
-  const role: Role = profile.role;
-
   // Chargement des données depuis Supabase dès que le profil est actif
+  // (déclaré avant les retours conditionnels pour respecter les règles des hooks React)
   useEffect(() => {
     if (!profile || !profile.active) return;
 
@@ -134,6 +113,28 @@ function App() {
       mounted = false;
     };
   }, [profile]);
+
+  // Gestion de l'authentification Supabase.
+  // 1. Tant que la session n'est pas chargée -> état de chargement.
+  // 2. Sans session -> page de connexion uniquement.
+  // 3. Profil introuvable ou compte non actif -> écran d'attente d'activation.
+  if (loading) {
+    return (
+      <div className="page-content" style={{ height: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        Chargement de votre session…
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginPage />;
+  }
+
+  if (!profile || !profile.active) {
+    return <PendingActivationPage onLogout={signOut} />;
+  }
+
+  const role: Role = profile.role;
 
   // Dérive le registre des ressources par cours à partir des documents de la base
   const courseResources = buildCourseResources(documentsData, coursesData);
