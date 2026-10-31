@@ -251,7 +251,8 @@
 }
 
 .upload-field select,
-.upload-field textarea {
+.upload-field textarea,
+.upload-field input {
   width: 100%;
   box-sizing: border-box;
   border: 1px solid rgba(150, 150, 170, 0.2);
@@ -874,4 +875,33 @@
   display: flex;
   align-items: center;
   gap: 5px;
+}
+
+/* ===== PAGE PARAMÈTRES ===== */
+.success-message {
+  color: #4ade80;
+  font-size: 11px;
+  margin-top: 6px;
+  display: block;
+}
+
+.field-note {
+  font-size: 10px;
+  color: #a5a0ad;
+  margin-top: 4px;
+  display: block;
+}
+
+.confirm-dialog {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid #eeedf3;
+  border-radius: 12px;
+  background: #fbfaff;
+}
+
+.confirm-dialog p {
+  font-size: 11px;
+  color: #393548;
+  margin: 0 0 12px;
 }

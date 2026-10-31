@@ -36,7 +36,7 @@ import { UploadPage } from "./pages/UploadPage";
 import { ValidationPage } from "./pages/ValidationPage";
 import { MyDepositsPage } from "./pages/MyDepositsPage";
 import { OverviewPage } from "./pages/OverviewPage";
-import { PlaceholderPage } from "./pages/PlaceholderPage";
+import { SettingsPage } from "./pages/SettingsPage";
 import type {
   Course,
   Classe,
@@ -57,7 +57,7 @@ function initials(source: string) {
 }
 
 function App() {
-  const { user, profile, loading, signOut } = useAuth();
+  const { user, profile, loading, signOut, updateProfile } = useAuth();
 
   // Tous les hooks doivent être appelés avant tout retour conditionnel
   // pour respecter les Règles des Hooks React.
@@ -384,7 +384,11 @@ function App() {
               />
             )
           ) : activePage === "settings" ? (
-            <PlaceholderPage page="settings" title="Paramètres" />
+            <SettingsPage
+              profile={profile}
+              updateProfile={updateProfile}
+              classes={classesData}
+            />
           ) : activePage === "administration" ? (
             <AdminPage
               users={profilesData}

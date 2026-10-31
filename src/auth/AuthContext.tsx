@@ -9,6 +9,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  updateProfile: (updates: { full_name?: string }) => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -94,8 +95,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }
 
+  async function updateProfile(updates: { full_name?: string }) {
+    if (!user) {
+      return { error: "Utilisateur non connecté." };
+    }
+
+    const { error } = await supabase
+      .from("profiles")
+      .update(updates)
+      .eq("id", user.id);
+
+    if (error) {
+      return { error: "Impossible d'enregistrer le nom." };
+    }
+
+    const { data, error: fetchError } = await supabase
+      .from("profiles")
+      .select("full_name, email, role, class_id, active")
+      .eq("id", user.id)
+      .single();
+
+    if (fetchError || !data) {
+      return { error: "Nom enregistré mais profil non rechargé." };
+    }
+
+    setProfile(data as Profile);
+    return { error: null };
+  }
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, profile, loading, signIn, signOut, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );
