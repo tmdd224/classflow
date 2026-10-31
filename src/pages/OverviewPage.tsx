@@ -12,7 +12,7 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
-import { downloadDocument, documents } from "../data";
+import { downloadDocument } from "../data";
 import { ActivityItem } from "../components/ActivityItem";
 import { StatCard } from "../components/StatCard";
 import type {
@@ -24,6 +24,7 @@ import type {
 
 export function OverviewPage({
   courses,
+  documents,
   courseResources,
   uploadedDocuments,
   query,
@@ -31,6 +32,7 @@ export function OverviewPage({
   onSelectCourse,
 }: {
   courses: Course[];
+  documents: DocumentItem[];
   courseResources: Record<string, CourseResource[]>;
   uploadedDocuments: DocumentItem[];
   query: string;

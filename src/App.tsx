@@ -11,13 +11,24 @@ import {
   X,
 } from "lucide-react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 
 import { useAuth } from "./auth/AuthContext";
 import { LoginPage } from "./pages/LoginPage";
 import { PendingActivationPage } from "./pages/PendingActivationPage";
-import { courses, courseResources, formatFileSize, navigation } from "./data";
+import { formatFileSize, navigation } from "./data";
+import {
+  fetchCoursesFromDB,
+  fetchDocumentsFromDB,
+  fetchClassesFromDB,
+  fetchProfilesFromDB,
+  dbToCourse,
+  dbToDocumentItem,
+  dbToClasse,
+  dbToUser,
+  buildCourseResources,
+} from "./lib/supabase";
 import { AdminPage } from "./pages/AdminPage";
 import { CoursesPage } from "./pages/CoursesPage";
 import { DocumentsPage } from "./pages/DocumentsPage";
@@ -26,7 +37,14 @@ import { ValidationPage } from "./pages/ValidationPage";
 import { MyDepositsPage } from "./pages/MyDepositsPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { PlaceholderPage } from "./pages/PlaceholderPage";
-import type { DocumentItem, PageKey, Role } from "./types";
+import type {
+  Course,
+  Classe,
+  User,
+  DocumentItem,
+  PageKey,
+  Role,
+} from "./types";
 import { roleLabels } from "./types";
 
 function initials(source: string) {
@@ -69,6 +87,55 @@ function App() {
   const [mobileMenu, setMobileMenu] = useState(false);
   const [uploadedDocuments, setUploadedDocuments] = useState<DocumentItem[]>([]);
 
+  // Données chargées depuis Supabase
+  const [coursesData, setCoursesData] = useState<Course[]>([]);
+  const [documentsData, setDocumentsData] = useState<DocumentItem[]>([]);
+  const [classesData, setClassesData] = useState<Classe[]>([]);
+  const [profilesData, setProfilesData] = useState<User[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
+
+  // Chargement des données depuis Supabase dès que le profil est actif
+  useEffect(() => {
+    if (!profile || !profile.active) return;
+
+    let mounted = true;
+
+    async function loadData() {
+      try {
+        const [coursesResult, documentsResult, classesResult, profilesResult] =
+          await Promise.all([
+            fetchCoursesFromDB(),
+            fetchDocumentsFromDB(),
+            fetchClassesFromDB(),
+            fetchProfilesFromDB(),
+          ]);
+
+        if (!mounted) return;
+
+        setCoursesData(coursesResult.map(dbToCourse));
+        setDocumentsData(documentsResult.map(dbToDocumentItem));
+        setClassesData(classesResult.map(dbToClasse));
+        setProfilesData(profilesResult.map(dbToUser));
+      } catch (error) {
+        console.error(
+          "Erreur lors du chargement des données depuis Supabase:",
+          error
+        );
+      } finally {
+        if (mounted) setDataLoading(false);
+      }
+    }
+
+    loadData();
+
+    return () => {
+      mounted = false;
+    };
+  }, [profile]);
+
+  // Dérive le registre des ressources par cours à partir des documents de la base
+  const courseResources = buildCourseResources(documentsData, coursesData);
+
   const pageTitle =
     navigation.find((item) => item.key === activePage)?.label ?? "Paramètres";
 
@@ -96,7 +163,7 @@ function App() {
     const color =
       type === "PDF" ? "violet" : type === "DOCX" ? "blue" : "orange";
 
-    const courseRecord = courses.find((c) => c.name === course);
+    const courseRecord = coursesData.find((c) => c.name === course);
 
     const newDocument: DocumentItem = {
       id: crypto.randomUUID(),
@@ -156,6 +223,15 @@ function App() {
     role === "etudiant" && profile.class_id
       ? `${roleLabels[role]} · ${profile.class_id}`
       : roleLabels[role];
+
+  // Pendant le chargement des données depuis Supabase, affiche un indicateur
+  if (dataLoading) {
+    return (
+      <div className="page-content" style={{ height: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        Chargement des données depuis la base…
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell">
@@ -313,7 +389,8 @@ function App() {
         <div className="page-content">
           {activePage === "overview" ? (
             <OverviewPage
-              courses={courses}
+              courses={coursesData}
+              documents={documentsData}
               courseResources={courseResources}
               uploadedDocuments={uploadedDocuments}
               query={query}
@@ -322,18 +399,22 @@ function App() {
             />
           ) : activePage === "courses" ? (
             <CoursesPage
+              courses={coursesData}
+              documents={documentsData}
               selectedCourse={selectedCourse}
               onSelectCourse={setSelectedCourse}
               uploadedDocuments={uploadedDocuments}
             />
           ) : activePage === "documents" ? (
             <DocumentsPage
-              query={query}
+              documents={documentsData}
               uploadedDocuments={uploadedDocuments}
+              query={query}
               onDelete={handleDeleteDocument}
             />
           ) : activePage === "upload" ? (
             <UploadPage
+              courses={coursesData}
               onUpload={handleUpload}
               onCancel={() => navigate("overview")}
             />
@@ -350,7 +431,13 @@ function App() {
           ) : activePage === "settings" ? (
             <PlaceholderPage page="settings" title="Paramètres" />
           ) : activePage === "administration" ? (
-            <AdminPage uploadedDocuments={uploadedDocuments} />
+            <AdminPage
+              uploadedDocuments={uploadedDocuments}
+              users={profilesData}
+              classes={classesData}
+              courses={coursesData}
+              documents={documentsData}
+            />
           ) : null}
         </div>
       </main>

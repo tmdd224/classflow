@@ -6,17 +6,26 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
-import { allDocuments, users, classes, courses } from "../data";
 import { StatCard } from "../components/StatCard";
 import type { DocumentItem, User, Classe, Course } from "../types";
 import { roleLabels } from "../types";
 
 interface AdminPageProps {
   uploadedDocuments: DocumentItem[];
+  users: User[];
+  classes: Classe[];
+  courses: Course[];
+  documents: DocumentItem[];
 }
 
-export function AdminPage({ uploadedDocuments }: AdminPageProps) {
-  const totalDocuments = uploadedDocuments.length + allDocuments.length;
+export function AdminPage({
+  uploadedDocuments,
+  users,
+  classes,
+  courses,
+  documents,
+}: AdminPageProps) {
+  const totalDocuments = uploadedDocuments.length + documents.length;
 
   const pending = uploadedDocuments.filter(
     (doc) => !doc.status || doc.status === "pending"

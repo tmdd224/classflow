@@ -3,22 +3,45 @@ import {
   ArrowRight,
   FileText,
 } from "lucide-react";
-import { downloadDocument, courses, courseResources } from "../data";
-import type { DocumentItem } from "../types";
+import { downloadDocument } from "../data";
+import type { Course, DocumentItem } from "../types";
 
 export function CoursesPage({
+  courses,
+  documents,
   selectedCourse,
   onSelectCourse,
   uploadedDocuments,
 }: {
+  courses: Course[];
+  documents: DocumentItem[];
   selectedCourse: string | null;
   onSelectCourse: (code: string | null) => void;
   uploadedDocuments: DocumentItem[];
 }) {
+  // Construire les ressources par cours à partir des documents de la base
+  const courseResources: Record<string, { name: string; type: string; date: string }[]> = {};
+  for (const doc of documents) {
+    if (!courseResources[doc.course]) {
+      courseResources[doc.course] = [];
+    }
+    courseResources[doc.course].push({
+      name: doc.name,
+      type: doc.type,
+      date: doc.date,
+    });
+  }
+  // S'assurer que tous les cours ont une entrée (même vide)
+  for (const course of courses) {
+    if (!courseResources[course.name]) {
+      courseResources[course.name] = [];
+    }
+  }
+
   const selected = courses.find((course) => course.code === selectedCourse);
 
   if (selected) {
-    const resources = courseResources[selected.code] ?? [];
+    const resources = courseResources[selected.name] ?? [];
 
     const courseDeposits = uploadedDocuments.filter(
       (doc) => doc.courseId === selected.code || doc.course === selected.name

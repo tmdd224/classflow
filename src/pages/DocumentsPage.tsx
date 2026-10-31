@@ -1,36 +1,30 @@
-import { ArrowDownToLine, FileText, Trash2 } from "lucide-react";
-import { useState } from "react";
-import { downloadDocument, allDocuments } from "../data";
+import {
+  ArrowDownToLine,
+  FileText,
+} from "lucide-react";
+import { downloadDocument } from "../data";
 import type { DocumentItem } from "../types";
 
 export function DocumentsPage({
-  query,
+  documents,
   uploadedDocuments,
+  query,
   onDelete,
 }: {
-  query: string;
+  documents: DocumentItem[];
   uploadedDocuments: DocumentItem[];
+  query: string;
   onDelete: (id: string) => void;
 }) {
-  const [selectedType, setSelectedType] = useState("Tous");
-  const [selectedCourse, setSelectedCourse] = useState("Tous");
+  const search = query.toLowerCase().trim();
 
-  const library = [...uploadedDocuments, ...allDocuments];
+  const library = [...uploadedDocuments, ...documents];
 
   const filtered = library.filter((doc) => {
-    const matchesQuery = `${doc.name} ${doc.course} ${
-      doc.description ?? ""
-    }`
-      .toLowerCase()
-      .includes(query.toLowerCase());
-
-    const matchesType =
-      selectedType === "Tous" || doc.type === selectedType;
-
-    const matchesCourse =
-      selectedCourse === "Tous" || doc.course === selectedCourse;
-
-    return matchesQuery && matchesType && matchesCourse;
+    const matchesSearch = search
+      ? doc.name.toLowerCase().includes(search)
+      : true;
+    return matchesSearch;
   });
 
   return (
@@ -38,140 +32,133 @@ export function DocumentsPage({
       <div className="welcome-row">
         <div>
           <div className="eyebrow">
-            <span className="live-dot" /> TA BIBLIOTHÈQUE
+            <span className="live-dot" /> DOCUMENTS PÉDAGOGIQUES
           </div>
 
-          <h1>Documents</h1>
+          <h1>Bibliothèque</h1>
 
           <p className="page-subtitle">
-            Retrouve tous tes supports de cours au même endroit.
+            Tous vos documents de cours et vos dépôts personnels.
           </p>
-        </div>
-
-        <div className="document-total">
-          <FileText size={20} />
-          <strong>{filtered.length}</strong>
-          <span>documents</span>
         </div>
       </div>
 
-      <section className="panel documents-library">
-        <div className="document-filters">
-          <div className="filter-group">
-            <label>Format</label>
-
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-            >
-              <option value="Tous">Tous les formats</option>
-              <option value="PDF">PDF</option>
-              <option value="DOCX">DOCX</option>
-              <option value="PPTX">PPTX</option>
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Matière</label>
-
-            <select
-              value={selectedCourse}
-              onChange={(e) => setSelectedCourse(e.target.value)}
-            >
-              <option value="Tous">Tous les cours</option>
-              <option value="Big Data">Big Data</option>
-              <option value="Intelligence artificielle">
-                Intelligence artificielle
-              </option>
-              <option value="Développement">Développement Web</option>
-            </select>
-          </div>
-
-          <button
-            className="reset-filters"
-            onClick={() => {
-              setSelectedType("Tous");
-              setSelectedCourse("Tous");
-            }}
-          >
-            Réinitialiser
-          </button>
-        </div>
-
+      <section className="panel documents-panel">
         <div className="section-heading">
           <div>
-            <span className="section-kicker">ESPACE DE STOCKAGE</span>
-            <h3>Tous les documents</h3>
+            <span className="section-kicker">RESSOURCES DISPONIBLES</span>
+            <h3>{filtered.length} document{filtered.length > 1 ? "s" : ""}</h3>
           </div>
-
-          <span className="document-count">
-            {filtered.length} résultat(s)
-          </span>
         </div>
 
         <div className="document-table">
           <div className="document-head">
             <span>NOM DU DOCUMENT</span>
+            <span>TYPE</span>
             <span>COURS</span>
-            <span>AJOUTÉ LE</span>
+            <span>DATE</span>
             <span>TAILLE</span>
             <span />
           </div>
-
           {filtered.map((doc) => (
-            <div
-              className="document-row"
-              key={doc.id ?? `${doc.name}-${doc.course}`}
-            >
+            <div className="document-row" key={doc.id}>
               <div className="document-name">
                 <div className={`file-icon ${doc.color}`}>
                   <FileText size={18} />
                 </div>
 
-                <div>
-                  <strong>{doc.name}</strong>
-                  <small>
-                    {doc.type}
-                    {doc.file ? " · Mon dépôt" : ""}
-                  </small>
-                </div>
+                <strong>{doc.name}</strong>
               </div>
 
+              <span className="document-course">{doc.type}</span>
               <span className="document-course">{doc.course}</span>
               <span className="document-date">{doc.date}</span>
               <span className="document-size">{doc.size}</span>
 
-              <div className="document-actions">
+              {doc.file ? (
+                <>
+                  <button
+                    className="download-button"
+                    onClick={() => downloadDocument(doc)}
+                  >
+                    <ArrowDownToLine size={17} />
+                  </button>
+                  <button
+                    className="download-button"
+                    onClick={() => onDelete(doc.id!)}
+                    title="Supprimer"
+                  >
+                    <span style={{ color: "#ef4444" }}>&times;</span>
+                  </button>
+                </>
+              ) : (
                 <button
                   className="download-button"
-                  aria-label={`Télécharger ${doc.name}`}
-                  title="Télécharger"
-                  onClick={() => downloadDocument(doc)}
+                  onClick={() =>
+                    alert(
+                      "Le téléchargement de cette ressource de la base sera disponible après connexion au stockage."
+                    )
+                  }
                 >
                   <ArrowDownToLine size={17} />
                 </button>
-
-                {doc.id && (
-                  <button
-                    className="download-button delete-document-button"
-                    aria-label={`Supprimer ${doc.name}`}
-                    title="Retirer de la bibliothèque"
-                    onClick={() => onDelete(doc.id!)}
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                )}
-              </div>
+              )}
             </div>
           ))}
-
-          {filtered.length === 0 && (
-            <p className="empty-state">
-              Aucun document ne correspond à ces critères.
-            </p>
-          )}
         </div>
       </section>
+
+      {documents.length > 0 && (
+        <section className="panel documents-panel">
+          <div className="section-heading">
+            <div>
+              <span className="section-kicker">RESSOURCES DE LA BASE</span>
+              <h3>
+                {documents.length} document{documents.length > 1 ? "s" : ""}
+                disponible{documents.length > 1 ? "s" : ""}
+              </h3>
+            </div>
+          </div>
+
+          <div className="document-table">
+            <div className="document-head">
+              <span>NOM DU DOCUMENT</span>
+              <span>TYPE</span>
+              <span>COURS</span>
+              <span>DATE</span>
+              <span>TAILLE</span>
+              <span />
+            </div>
+            {documents.map((doc) => (
+              <div className="document-row" key={doc.id}>
+                <div className="document-name">
+                  <div className={`file-icon ${doc.color}`}>
+                    <FileText size={18} />
+                  </div>
+
+                  <strong>{doc.name}</strong>
+                </div>
+
+                <span className="document-course">{doc.type}</span>
+                <span className="document-course">{doc.course}</span>
+                <span className="document-date">{doc.date}</span>
+                <span className="document-size">{doc.size}</span>
+
+                <button
+                  className="download-button"
+                  onClick={() =>
+                    alert(
+                      "Le téléchargement de cette ressource de la base sera disponible après connexion au stockage."
+                    )
+                  }
+                >
+                  <ArrowDownToLine size={17} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

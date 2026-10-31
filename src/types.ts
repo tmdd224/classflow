@@ -70,3 +70,37 @@ export type Profile = {
   class_id: string | null;
   active: boolean;
 };
+
+/** Ligne de la table `courses` dans Supabase. */
+export type CourseDB = {
+  id: string;
+  name: string;
+  code: string;
+  progress: number;
+  resources: number;
+  color: string;
+  initials: string;
+  responsable: string | null;
+};
+
+/** Ligne de la table `documents` dans Supabase. */
+export type DocumentDB = {
+  id: string;
+  name: string;
+  type: string;
+  course: string;
+  course_id: string | null;
+  date: string;
+  size: string;
+  color: string;
+  storage_path: string | null;
+};
+
+/** Ligne de la table `classes` dans Supabase. */
+export type ClassDB = {
+  id: string;
+  name: string;
+  niveau: string;
+  effectif: number;
+  responsable: string | null;
+};

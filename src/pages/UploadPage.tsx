@@ -1,69 +1,30 @@
-import {
-  CloudUpload,
-  FileText,
-  FolderOpen,
-  ShieldCheck,
-  X,
-} from "lucide-react";
-import { useRef, useState } from "react";
-import { formatFileSize } from "../data";
+import { useState } from "react";
+import type { Course } from "../types";
 
 export function UploadPage({
+  courses,
   onUpload,
   onCancel,
 }: {
+  courses: Course[];
   onUpload: (file: File, course: string, description: string) => void;
   onCancel: () => void;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedCourse, setSelectedCourse] = useState("Big Data");
+  const [file, setFile] = useState<File | null>(null);
+  const [course, setCourse] = useState("");
   const [description, setDescription] = useState("");
-  const [isDragging, setIsDragging] = useState(false);
-  const [error, setError] = useState("");
 
-  function validateFile(file: File) {
-    const extension = file.name.split(".").pop()?.toLowerCase();
-
-    if (!["pdf", "docx", "pptx"].includes(extension ?? "")) {
-      setError(
-        "Format non accepté. Choisis un fichier PDF, DOCX ou PPTX."
-      );
-      setSelectedFile(null);
-      return;
-    }
-
-    if (file.size > 20 * 1024 * 1024) {
-      setError("Le fichier dépasse la limite de 20 Mo.");
-      setSelectedFile(null);
-      return;
-    }
-
-    setError("");
-    setSelectedFile(file);
-  }
-
-  function handleDrop(event: React.DragEvent<HTMLDivElement>) {
-    event.preventDefault();
-    setIsDragging(false);
-
-    const file = event.dataTransfer.files[0];
-
-    if (file) {
-      validateFile(file);
-    }
-  }
-
-  function submitUpload(event: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!selectedFile) {
-      setError("Sélectionne d'abord un fichier.");
+    if (!file || !course) {
       return;
     }
 
-    onUpload(selectedFile, selectedCourse, description.trim());
+    onUpload(file, course, description);
+    setFile(null);
+    setCourse("");
+    setDescription("");
   }
 
   return (
@@ -71,165 +32,76 @@ export function UploadPage({
       <div className="welcome-row">
         <div>
           <div className="eyebrow">
-            <span className="live-dot" /> PARTAGE DE RESSOURCES
+            <span className="live-dot" /> DÉPÔT DE DOCUMENT
           </div>
 
-          <h1>Déposer un fichier</h1>
+          <h1>Déposer un document</h1>
 
           <p className="page-subtitle">
-            Ajoute un support de cours à ta bibliothèque ClassFlow.
+            Sélectionnez un fichier, choisissez le cours de destination et
+            envoyez votre dépôt pour validation.
           </p>
         </div>
       </div>
 
-      <form className="panel upload-form" onSubmit={submitUpload}>
-        <div className="section-heading">
-          <div>
-            <span className="section-kicker">NOUVEAU DOCUMENT</span>
-            <h3>Informations du fichier</h3>
-          </div>
-        </div>
-
-        <div
-          className={`upload-dropzone ${isDragging ? "dragging" : ""} ${
-            selectedFile ? "has-file" : ""
-          }`}
-          onDragOver={(event) => {
-            event.preventDefault();
-            setIsDragging(true);
-          }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={handleDrop}
-        >
+      <form className="panel upload-panel" onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label className="form-label">Fichier</label>
           <input
-            ref={inputRef}
             type="file"
-            accept=".pdf,.docx,.pptx"
-            className="upload-file-input"
+            className="form-file"
+            accept=".pdf,.doc,.docx"
             onChange={(event) => {
-              const file = event.target.files?.[0];
-
-              if (file) {
-                validateFile(file);
-              }
+              const selected = event.target.files?.[0] ?? null;
+              setFile(selected);
             }}
           />
-
-          {selectedFile ? (
-            <>
-              <div className="upload-selected-icon">
-                <FileText size={30} />
-              </div>
-
-              <strong>{selectedFile.name}</strong>
-
-              <span>
-                {formatFileSize(selectedFile.size)} · Fichier prêt à être
-                déposé
-              </span>
-
-              <button
-                type="button"
-                className="upload-change-button"
-                onClick={() => {
-                  setSelectedFile(null);
-
-                  if (inputRef.current) {
-                    inputRef.current.value = "";
-                  }
-                }}
-              >
-                <X size={15} /> Retirer le fichier
-              </button>
-            </>
-          ) : (
-            <>
-              <div className="upload-cloud-icon">
-                <CloudUpload size={34} />
-              </div>
-
-              <strong>Glisse ton document ici</strong>
-
-              <span>
-                ou sélectionne un fichier depuis ton ordinateur
-              </span>
-
-              <button
-                type="button"
-                className="primary-button"
-                onClick={() => inputRef.current?.click()}
-              >
-                <FolderOpen size={17} /> Choisir un fichier
-              </button>
-
-              <small>
-                Formats acceptés : PDF, DOCX, PPTX · 20 Mo maximum
-              </small>
-            </>
-          )}
         </div>
 
-        {error && <p className="upload-error">{error}</p>}
-
-        <div className="upload-fields">
-          <div className="upload-field">
-            <label htmlFor="upload-course">Cours associé</label>
-
-            <select
-              id="upload-course"
-              value={selectedCourse}
-              onChange={(event) => setSelectedCourse(event.target.value)}
-            >
-              <option value="Big Data">Big Data</option>
-              <option value="Intelligence artificielle">
-                Intelligence artificielle
-              </option>
-              <option value="Développement">Développement Web</option>
-            </select>
-          </div>
-
-          <div className="upload-field">
-            <label htmlFor="upload-description">
-              Description (facultatif)
-            </label>
-
-            <textarea
-              id="upload-description"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder="Exemple : Support du cours de Big Data sur Apache Hive..."
-              rows={4}
-            />
-          </div>
-        </div>
-
-        <div className="upload-actions">
-          <button
-            type="button"
-            className="reset-filters"
-            onClick={onCancel}
+        <div className="form-group">
+          <label className="form-label">Cours de destination</label>
+          <select
+            className="form-select"
+            value={course}
+            onChange={(event) => setCourse(event.target.value)}
           >
+            <option value="">Sélectionner un cours</option>
+            {courses.map((c) => (
+              <option key={c.code} value={c.name}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">Description</label>
+          <textarea
+            className="form-textarea"
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            placeholder="Précisez le contenu de ce dépôt…"
+          />
+        </div>
+
+        <div className="form-actions">
+          <button type="button" className="btn-secondary" onClick={onCancel}>
             Annuler
           </button>
-
           <button
             type="submit"
-            className="primary-button"
-            disabled={!selectedFile}
+            className="btn-primary"
+            disabled={!file || !course}
           >
-            <CloudUpload size={17} /> Déposer le document
+            Déposer le document
           </button>
         </div>
-      </form>
 
-      <div className="upload-information">
-        <ShieldCheck size={19} />
-
-        <p>
-          Vérifie que ton document est lisible et qu'il correspond au cours
-          sélectionné avant de le partager.
+        <p className="form-note">
+          Votre document sera examiné par l'équipe pédagogique avant
+          publication. Vous recevrez une notification une fois validé.
         </p>
-      </div>
+      </form>
     </div>
   );
 }
