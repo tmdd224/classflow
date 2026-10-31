@@ -6,7 +6,7 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
-import { documents, users, classes, courses } from "../data";
+import { allDocuments, users, classes, courses } from "../data";
 import { StatCard } from "../components/StatCard";
 import type { DocumentItem, User, Classe, Course } from "../types";
 import { roleLabels } from "../types";
@@ -16,7 +16,7 @@ interface AdminPageProps {
 }
 
 export function AdminPage({ uploadedDocuments }: AdminPageProps) {
-  const totalDocuments = uploadedDocuments.length + documents.length;
+  const totalDocuments = uploadedDocuments.length + allDocuments.length;
 
   const pending = uploadedDocuments.filter(
     (doc) => !doc.status || doc.status === "pending"
@@ -86,7 +86,7 @@ export function AdminPage({ uploadedDocuments }: AdminPageProps) {
           icon={<ShieldCheck />}
           label="Validés"
           value={String(approved).padStart(2, "0")}
-          note="Publiés"
+          note="Validés"
           tone="green"
         />
 
@@ -94,7 +94,7 @@ export function AdminPage({ uploadedDocuments }: AdminPageProps) {
           icon={<Clock3 />}
           label="Refusés"
           value={String(rejected).padStart(2, "0")}
-          note="Rejetés"
+          note="Refusés"
           tone="red"
         />
 
@@ -132,7 +132,9 @@ export function AdminPage({ uploadedDocuments }: AdminPageProps) {
               <span>{user.email}</span>
               <span>{roleLabels[user.role]}</span>
               <span>{user.classe ?? "—"}</span>
-              <span>{user.status === "actif" ? "Actif" : "Inactif"}</span>
+              <span className={`status-badge ${user.status === "actif" ? "status-active" : "status-inactive"}`}>
+                {user.status === "actif" ? "Actif" : "Inactif"}
+              </span>
             </div>
           ))}
         </div>
