@@ -4,6 +4,7 @@ import {
   ChevronRight,
   GraduationCap,
   LayoutDashboard,
+  LogOut,
   MoreHorizontal,
   Search,
   Settings,
@@ -146,7 +147,9 @@ function App() {
       : roleLabels[role];
 
   const pageTitle =
-    navigation.find((item) => item.key === activePage)?.label ?? "Paramètres";
+    activePage === "validation" && role === "etudiant"
+      ? "Mes dépôts"
+      : navigation.find((item) => item.key === activePage)?.label ?? "Paramètres";
 
   const visibleNavigation = navigation.filter((item) =>
     item.roles.includes(role)
@@ -284,7 +287,8 @@ function App() {
             <MoreHorizontal size={19} className="muted-icon" />
 
             <button className="logout-button" onClick={signOut}>
-              Déconnexion
+              <LogOut size={15} />
+              <span>Déconnexion</span>
             </button>
           </div>
         </div>

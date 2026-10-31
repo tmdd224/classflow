@@ -112,6 +112,8 @@ export function dbToCourse(db: CourseDB): Course {
     initials: db.initials,
     responsable: db.responsable ?? undefined,
     class_id: db.class_id ?? undefined,
+    semester: db.semester,
+    planned_hours: db.planned_hours,
   };
 }
 

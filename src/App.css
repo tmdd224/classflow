@@ -815,3 +815,63 @@
   text-align: center;
 }
 .pending-detail strong { color: #171522; }
+
+/* ===== BOUTON DÉCONNEXION (style app, discret) ===== */
+.logout-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #a6a2b2;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.logout-button:hover {
+  background: #242131;
+  color: #fff;
+}
+.logout-button svg {
+  flex-shrink: 0;
+}
+
+/* Nom tronqué sur une ligne avec points de suspension */
+.profile-copy {
+  min-width: 0;
+}
+.profile-copy strong {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== SECTIONS PAR SEMESTRE (Mes cours) ===== */
+.semester-section {
+  margin-bottom: 26px;
+}
+.semester-title {
+  font: 700 14px Manrope, sans-serif;
+  letter-spacing: -0.3px;
+  color: #2d293c;
+  margin: 0 0 12px;
+  padding-left: 8px;
+  border-left: 3px solid #9878ff;
+}
+.course-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 9px;
+  color: #a09baa;
+  margin-top: 8px;
+}
+.course-meta span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}

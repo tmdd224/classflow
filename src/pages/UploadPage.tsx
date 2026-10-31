@@ -197,11 +197,19 @@ export function UploadPage({
               onChange={(event) => setCourse(event.target.value)}
             >
               <option value="">Sélectionner un cours</option>
-              {courses.map((c) => (
-                <option key={c.code} value={c.name}>
-                  {c.name}
-                </option>
-              ))}
+              {[1, 2].map((sem) => {
+                const semCourses = courses.filter((c) => c.semester === sem);
+                if (semCourses.length === 0) return null;
+                return (
+                  <optgroup key={sem} label={`Semestre ${sem}`}>
+                    {semCourses.map((c) => (
+                      <option key={c.code} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                );
+              })}
             </select>
           </div>
 

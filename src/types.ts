@@ -29,6 +29,8 @@ export type Course = {
   initials: string;
   responsable?: string;
   class_id?: string;
+  semester?: number;
+  planned_hours?: number;
 };
 
 export type User = {
@@ -85,6 +87,8 @@ export type CourseDB = {
   initials: string;
   responsable: string | null;
   class_id: string | null;
+  semester: number;
+  planned_hours: number;
 };
 
 /** Ligne de la table `documents` dans Supabase. */

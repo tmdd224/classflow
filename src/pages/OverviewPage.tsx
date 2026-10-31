@@ -143,7 +143,7 @@ export function OverviewPage({
         <StatCard
           icon={<BookOpen />}
           label="Cours actifs"
-          value={String(courses.length)}
+          value={String(courses.filter((c) => c.semester === 1).length)}
           note="Ton programme actuel"
           tone="purple"
         />
@@ -219,7 +219,7 @@ export function OverviewPage({
                     </div>
 
                     <div className="course-meta">
-                      <span>{course.code}</span>
+                      <span>{(course.planned_hours ?? 0)}h</span>
                     </div>
                   </div>
 

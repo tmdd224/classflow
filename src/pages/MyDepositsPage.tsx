@@ -3,6 +3,16 @@ import { Clock3, CheckCircle2, FileText, ShieldCheck, X } from "lucide-react";
 import type { DocumentItem } from "../types";
 import { getDocumentSignedUrl } from "../lib/supabase";
 
+const MONTHS_FR = [
+  "janv.", "févr.", "mars", "avr.", "mai", "juin",
+  "juil.", "août", "sept.", "oct.", "nov.", "déc.",
+];
+
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getDate()} ${MONTHS_FR[d.getMonth()]} ${d.getFullYear()}`;
+}
+
 export function MyDepositsPage({
   documents,
   userId,
@@ -129,8 +139,7 @@ export function MyDepositsPage({
                     <strong>{doc.name}</strong>
 
                     <span>
-                      {doc.mime_type} · {doc.course} · {doc.date} ·
-                      {doc.size}
+                      {doc.course} · {formatDate(doc.date)} · {doc.size}
                     </span>
                   </div>
 

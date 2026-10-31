@@ -45,6 +45,24 @@ export function CoursesPage({
     window.location.href = result.url;
   }
 
+  const validatedDocsForCourse = (course: Course) =>
+    documents.filter(
+      (doc) =>
+        doc.uploaded_by === userId &&
+        doc.status === "approved" &&
+        (doc.courseId === course.code || doc.course === course.name)
+    ).length;
+
+  const coursesBySemester = courses.reduce(
+    (acc, course) => {
+      const sem = course.semester ?? 1;
+      if (!acc[sem]) acc[sem] = [];
+      acc[sem].push(course);
+      return acc;
+    },
+    {} as Record<number, Course[]>
+  );
+
   if (selected) {
     const resources = courseResources[selected.name] ?? [];
 
@@ -72,7 +90,11 @@ export function CoursesPage({
             <h1>{selected.name}</h1>
 
             <p className="page-subtitle">
-              {selected.code} · {selected.resources} ressources disponibles
+              {(selected.planned_hours ?? 0)}h · {validatedDocsForCourse(selected)} document{
+                validatedDocsForCourse(selected) > 1 ? "s" : ""
+              } validé{
+                validatedDocsForCourse(selected) > 1 ? "s" : ""
+              }
             </p>
           </div>
         </div>
@@ -190,38 +212,46 @@ export function CoursesPage({
         </div>
       </div>
 
-      <div className="courses-grid">
-        {courses.map((course) => (
-          <button
-            className="panel course-card"
-            key={course.code}
-            onClick={() => onSelectCourse(course.code)}
-          >
-            <div className={`course-icon ${course.color}`}>
-              {course.initials}
+      {[1, 2].map((sem) => {
+        const semCourses = coursesBySemester[sem] ?? [];
+        if (semCourses.length === 0) return null;
+
+        return (
+          <section key={sem} className="semester-section">
+            <h2 className="semester-title">Semestre {sem}</h2>
+            <div className="courses-grid">
+              {semCourses.map((course) => (
+                <button
+                  className="panel course-card"
+                  key={course.code}
+                  onClick={() => onSelectCourse(course.code)}
+                >
+                  <div className={`course-icon ${course.color}`}>
+                    {course.initials}
+                  </div>
+
+                  <h3>{course.name}</h3>
+
+                  <div className="course-meta">
+                    <span>{(course.planned_hours ?? 0)}h</span>
+                    <span>
+                      {validatedDocsForCourse(course)} document{
+                        validatedDocsForCourse(course) > 1 ? "s" : ""
+                      } validé{
+                        validatedDocsForCourse(course) > 1 ? "s" : ""
+                      }
+                    </span>
+                  </div>
+
+                  <span className="text-button">
+                    Ouvrir le cours <ArrowRight size={15} />
+                  </span>
+                </button>
+              ))}
             </div>
-
-            <h3>{course.name}</h3>
-            <p>{course.code}</p>
-
-            <div className="progress-track">
-              <div
-                className={`progress-fill ${course.color}`}
-                style={{ width: `${course.progress}%` }}
-              />
-            </div>
-
-            <div className="course-meta">
-              <span>{course.progress}% parcouru</span>
-              <span>{course.resources} ressources</span>
-            </div>
-
-            <span className="text-button">
-              Ouvrir le cours <ArrowRight size={15} />
-            </span>
-          </button>
-        ))}
-      </div>
+          </section>
+        );
+      })}
     </div>
   );
 }
