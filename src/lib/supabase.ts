@@ -546,3 +546,77 @@ export async function fetchDocumentEvents(
   return { ok: true, events: (data ?? []) as DocumentEvent[] };
 }
 
+/**
+ * Active ou désactive un compte utilisateur (administrateur uniquement).
+ */
+export async function toggleUserActive(
+  userId: string,
+  active: boolean
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { error } = await supabase
+    .from("profiles")
+    .update({ active })
+    .eq("id", userId);
+
+  if (error) {
+    return { ok: false, error: translateDbError(error) };
+  }
+  return { ok: true };
+}
+
+/**
+ * Crée une classe (administrateur uniquement).
+ */
+export async function createClass(
+  name: string,
+  niveau: string,
+  responsableId: string | null
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  const { data, error } = await supabase
+    .from("classes")
+    .insert([{ name, niveau, effectif: 0, responsable: responsableId ?? null }])
+    .select("id")
+    .single();
+
+  if (error) {
+    return { ok: false, error: translateDbError(error) };
+  }
+  return { ok: true, id: data.id };
+}
+
+/**
+ * Affecte (ou retire) un responsable à une classe (administrateur uniquement).
+ */
+export async function updateClassResponsable(
+  classId: string,
+  responsableId: string | null
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { error } = await supabase
+    .from("classes")
+    .update({ responsable: responsableId ?? null })
+    .eq("id", classId);
+
+  if (error) {
+    return { ok: false, error: translateDbError(error) };
+  }
+  return { ok: true };
+}
+
+/**
+ * Affecte (ou retire) un responsable à un cours (administrateur uniquement).
+ */
+export async function updateCourseResponsable(
+  courseId: string,
+  responsableId: string | null
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { error } = await supabase
+    .from("courses")
+    .update({ responsable: responsableId ?? null })
+    .eq("id", courseId);
+
+  if (error) {
+    return { ok: false, error: translateDbError(error) };
+  }
+  return { ok: true };
+}
+

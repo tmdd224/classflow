@@ -1,14 +1,24 @@
-import {
+﻿import {
   Clock3,
-  Edit3,
   FileText,
   Plus,
   ShieldCheck,
+  ToggleRight,
+  ToggleLeft,
   Users,
+  Save,
+  X as XIcon,
 } from "lucide-react";
+import { useState } from "react";
 import { StatCard } from "../components/StatCard";
 import type { DocumentItem, User, Classe, Course } from "../types";
 import { roleLabels } from "../types";
+import {
+  toggleUserActive,
+  createClass,
+  updateClassResponsable,
+  updateCourseResponsable,
+} from "../lib/supabase";
 
 export function AdminPage({
   users,
@@ -38,24 +48,91 @@ export function AdminPage({
   const etudiants = users.filter((u) => u.role === "etudiant").length;
   const responsables = users.filter((u) => u.role === "responsable").length;
 
-  const disabledActions = (
-    <>
-      <div className="admin-buttons">
-        <button className="primary-button" disabled>
-          <Plus size={15} /> Ajouter
-        </button>
-        <button className="text-button" disabled>
-          <Edit3 size={15} /> Modifier
-        </button>
-      </div>
-      <span className="admin-locked">
-        Disponible après l'authentification et la base de données
-      </span>
-    </>
+  const responsablesList = users.filter(
+    (u) => u.role === "responsable" || u.role === "administrateur"
   );
+
+  const [newClassName, setNewClassName] = useState("");
+  const [newClassNiveau, setNewClassNiveau] = useState("");
+  const [creatingClass, setCreatingClass] = useState(false);
+  const [classResponsable, setClassResponsable] = useState<Record<string, string>>({});
+  const [courseResponsable, setCourseResponsable] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState<Record<string, boolean>>({});
+  const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+
+  function clearMessage() {
+    setMessage(null);
+  }
+
+  async function handleToggleUser(user: User) {
+    const newActive = user.status !== "actif";
+    setSaving({ ...saving, [user.id]: true });
+    clearMessage();
+    const result = await toggleUserActive(user.id, newActive);
+    setSaving({ ...saving, [user.id]: false });
+    if (!result.ok) {
+      setMessage({ text: (result as { ok: false; error: string }).error, type: "error" });
+      return;
+    }
+    setMessage({ text: `Compte ${newActive ? "activé" : "désactivé"} avec succès.`, type: "success" });
+  }
+
+  async function handleCreateClass() {
+    if (!newClassName.trim() || !newClassNiveau.trim()) {
+      setMessage({ text: "Nom et niveau requis.", type: "error" });
+      return;
+    }
+    setCreatingClass(true);
+    clearMessage();
+    const result = await createClass(newClassName.trim(), newClassNiveau.trim(), null);
+    setCreatingClass(false);
+    if (!result.ok) {
+      setMessage({ text: (result as { ok: false; error: string }).error, type: "error" });
+      return;
+    }
+    setNewClassName("");
+    setNewClassNiveau("");
+    setMessage({ text: "Classe créée avec succès.", type: "success" });
+  }
+
+  async function handleSaveClassResponsable(classId: string) {
+    const respId = classResponsable[classId] || null;
+    setSaving({ ...saving, [classId]: true });
+    clearMessage();
+    const result = await updateClassResponsable(classId, respId);
+    setSaving({ ...saving, [classId]: false });
+    if (!result.ok) {
+      setMessage({ text: (result as { ok: false; error: string }).error, type: "error" });
+      return;
+    }
+    setMessage({ text: "Responsable de classe mis à jour.", type: "success" });
+  }
+
+  async function handleSaveCourseResponsable(courseId: string) {
+    const respId = courseResponsable[courseId] || null;
+    setSaving({ ...saving, [courseId]: true });
+    clearMessage();
+    const result = await updateCourseResponsable(courseId, respId);
+    setSaving({ ...saving, [courseId]: false });
+    if (!result.ok) {
+      setMessage({ text: (result as { ok: false; error: string }).error, type: "error" });
+      return;
+    }
+    setMessage({ text: "Responsable de cours mis à jour.", type: "success" });
+  }
 
   return (
     <div className="admin-page">
+      {message && (
+        <div
+          className={`admin-message admin-message-${message.type}`}
+          role="alert"
+          onClick={clearMessage}
+        >
+          {message.text}
+        </div>
+      )}
+
       <div className="welcome-row">
         <div>
           <div className="eyebrow">
@@ -65,7 +142,7 @@ export function AdminPage({
           <h1>Tableau de bord</h1>
 
           <p className="page-subtitle">
-            Vue globale de la plateforme ClassFlow (données de démonstration).
+            Gestion des utilisateurs, des classes et des cours.
           </p>
         </div>
       </div>
@@ -75,7 +152,7 @@ export function AdminPage({
           icon={<FileText />}
           label="Documents au total"
           value={String(totalDocuments)}
-          note="Dépôts et démonstration"
+          note="DÃ©pÃ´ts et dÃ©monstration"
           tone="purple"
         />
 
@@ -83,23 +160,23 @@ export function AdminPage({
           icon={<Clock3 />}
           label="En attente"
           value={String(pending).padStart(2, "0")}
-          note="À examiner"
+          note="Ã€ examiner"
           tone="orange"
         />
 
         <StatCard
           icon={<ShieldCheck />}
-          label="Validés"
+          label="ValidÃ©s"
           value={String(approved).padStart(2, "0")}
-          note="Validés"
+          note="ValidÃ©s"
           tone="green"
         />
 
         <StatCard
           icon={<Clock3 />}
-          label="Refusés"
+          label="RefusÃ©s"
           value={String(rejected).padStart(2, "0")}
-          note="Refusés"
+          note="RefusÃ©s"
           tone="red"
         />
 
@@ -107,7 +184,7 @@ export function AdminPage({
           icon={<Users />}
           label="Utilisateurs"
           value={String(users.length)}
-          note={`${etudiants} étudiants · ${responsables} responsables`}
+          note={`${etudiants} Ã©tudiants Â· ${responsables} responsables`}
           tone="blue"
         />
       </section>
@@ -118,17 +195,17 @@ export function AdminPage({
             <span className="section-kicker">UTILISATEURS</span>
             <h3>Utilisateurs de la plateforme</h3>
           </div>
-
-          <div className="admin-actions">{disabledActions}</div>
+          <div className="admin-actions" />
         </div>
 
         <div className="document-table admin-users">
           <div className="document-head">
             <span>NOM</span>
             <span>EMAIL</span>
-            <span>RÔLE</span>
+            <span>RÃ”LE</span>
             <span>CLASSE</span>
             <span>STATUT</span>
+            <span />
           </div>
 
           {users.map((user: User) => (
@@ -136,10 +213,24 @@ export function AdminPage({
               <strong>{user.name}</strong>
               <span>{user.email}</span>
               <span>{roleLabels[user.role]}</span>
-              <span>{user.classe ?? "—"}</span>
+              <span>{user.classe ?? "â€”"}</span>
               <span className={`status-badge ${user.status === "actif" ? "status-active" : "status-inactive"}`}>
                 {user.status === "actif" ? "Actif" : "Inactif"}
               </span>
+              <button
+                className={`text-button ${saving[user.id] ? "saving" : ""}`}
+                onClick={() => handleToggleUser(user)}
+                disabled={saving[user.id]}
+                aria-label={user.status === "actif" ? "DÃ©sactiver le compte" : "Activer le compte"}
+              >
+                {saving[user.id] ? (
+                  <Save size={14} />
+                ) : user.status === "actif" ? (
+                  <ToggleLeft size={14} />
+                ) : (
+                  <ToggleRight size={14} />
+                )}
+              </button>
             </div>
           ))}
         </div>
@@ -152,7 +243,39 @@ export function AdminPage({
             <h3>Classes et effectifs</h3>
           </div>
 
-          <div className="admin-actions">{disabledActions}</div>
+          {creatingClass ? (
+            <div className="admin-actions creating">
+              <input
+                className="admin-input"
+                value={newClassName}
+                onChange={(e) => setNewClassName(e.target.value)}
+                placeholder="Nom de la classe"
+                autoFocus
+              />
+              <input
+                className="admin-input"
+                value={newClassNiveau}
+                onChange={(e) => setNewClassNiveau(e.target.value)}
+                placeholder="Niveau (ex: L3, M1...)"
+              />
+              <button
+                className="primary-button"
+                onClick={handleCreateClass}
+                disabled={!newClassName.trim() || !newClassNiveau.trim()}
+              >
+                CrÃ©er
+              </button>
+              <button className="text-button" onClick={() => setCreatingClass(false)}>
+                <XIcon size={14} /> Annuler
+              </button>
+            </div>
+          ) : (
+            <div className="admin-actions">
+              <button className="primary-button" onClick={() => setCreatingClass(true)}>
+                <Plus size={14} /> CrÃ©er une classe
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="document-table admin-classes">
@@ -161,16 +284,45 @@ export function AdminPage({
             <span>NIVEAU</span>
             <span>EFFECTIF</span>
             <span>RESPONSABLE</span>
+            <span />
           </div>
 
-          {classes.map((classe: Classe) => (
-            <div className="document-row" key={classe.id}>
-              <strong>{classe.name}</strong>
-              <span>{classe.niveau}</span>
-              <span>{classe.effectif}</span>
-              <span>{classe.responsable ?? "—"}</span>
-            </div>
-          ))}
+          {classes.map((classe: Classe) => {
+            const currentResp = classe.responsable ?? "";
+            const isSaving = saving[classe.id];
+            return (
+              <div className="document-row" key={classe.id}>
+                <strong>{classe.name}</strong>
+                <span>{classe.niveau}</span>
+                <span>{classe.effectif}</span>
+                <div className="responsable-cell">
+                  <select
+                    value={classResponsable[classe.id] ?? currentResp}
+                    onChange={(e) => setClassResponsable({ ...classResponsable, [classe.id]: e.target.value })}
+                    disabled={isSaving}
+                  >
+                    <option value="">â€” Aucun â€”</option>
+                    {responsablesList.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} ({u.email})
+                      </option>
+                    ))}
+                  </select>
+                  {isSaving ? (
+                    <Save size={14} />
+                  ) : (
+                    <button
+                      className="text-button"
+                      onClick={() => handleSaveClassResponsable(classe.id)}
+                      title="Enregistrer"
+                    >
+                      <Save size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
 
@@ -178,10 +330,9 @@ export function AdminPage({
         <div className="section-heading">
           <div>
             <span className="section-kicker">COURS</span>
-            <h3>Cours et responsables affectés</h3>
+            <h3>Cours et responsables affectÃ©s</h3>
           </div>
-
-          <div className="admin-actions">{disabledActions}</div>
+          <div className="admin-actions" />
         </div>
 
         <div className="document-table admin-courses">
@@ -191,17 +342,45 @@ export function AdminPage({
             <span>RESPONSABLE</span>
             <span>PROGRESSION</span>
             <span>RESSOURCES</span>
+            <span />
           </div>
 
-          {courses.map((course: Course) => (
-            <div className="document-row" key={course.code}>
-              <strong>{course.name}</strong>
-              <span>{course.code}</span>
-              <span>{course.responsable ?? "—"}</span>
-              <span>{course.progress}%</span>
-              <span>{course.resources}</span>
-            </div>
-          ))}
+          {courses.map((course: Course) => {
+            const currentResp = course.responsable ?? "";
+            const isSaving = saving[course.code];
+            return (
+              <div className="document-row" key={course.code}>
+                <strong>{course.name}</strong>
+                <span>{course.code}</span>
+                <div className="responsable-cell">
+                  <select
+                    value={courseResponsable[course.code] ?? currentResp}
+                    onChange={(e) => setCourseResponsable({ ...courseResponsable, [course.code]: e.target.value })}
+                    disabled={isSaving}
+                  >
+                    <option value="">â€” Aucun â€”</option>
+                    {responsablesList.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} ({u.email})
+                      </option>
+                    ))}
+                  </select>
+                  {isSaving ? (
+                    <Save size={14} />
+                  ) : (
+                    <button
+                      className="text-button"
+                      onClick={() => handleSaveCourseResponsable(course.code)}
+                      title="Enregistrer"
+                    >
+                      <Save size={14} />
+                    </button>
+                  )}
+                </div>
+                <span>{course.progress}%</span>
+                <span>{course.resources}</span>
+              </div>
+          )})}
         </div>
       </section>
     </div>

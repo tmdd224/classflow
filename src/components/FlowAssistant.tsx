@@ -8,6 +8,9 @@ import {
   User,
 } from "lucide-react";
 import { useState } from "react";
+import { supabase } from "../lib/supabase";
+
+const FLOW_CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/flow-chat`;
 
 type QuickAction = {
   label: string;
@@ -44,10 +47,42 @@ export function FlowAssistant({ onClose }: FlowAssistantProps) {
     setIsSending(true);
 
     try {
-      setMessages((prev) => [
-        ...prev,
-        { role: "model" as const, text: "Assistant bientôt disponible" },
-      ]);
+      const { data: session } = await supabase.auth.getSession();
+      const token = session?.session?.access_token;
+      if (!token) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "model" as const, text: "Connexion requise. Reconnectez-vous." },
+        ]);
+        return;
+      }
+
+      const res = await fetch(FLOW_CHAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          messages: messages.concat(userMessage).map((m) => ({
+            role: m.role === "model" ? "assistant" : "user",
+            content: m.text,
+          })),
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: "Erreur inconnue" }));
+        setMessages((prev) => [
+          ...prev,
+          { role: "model" as const, text: errorData.error || "Erreur lors de l'appel à l'assistant." },
+        ]);
+        return;
+      }
+
+      const data = await res.json();
+      const reply = data.reply || "Aucune réponse reçue.";
+      setMessages((prev) => [...prev, { role: "model" as const, text: reply }]);
     } catch (error) {
       console.error("Erreur Flow Assistant:", error);
       setMessages((prev) => [
