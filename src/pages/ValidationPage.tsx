@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import {
   Clock3,
   CheckCircle2,
+  Download,
   FileText,
   ShieldCheck,
   X,
@@ -12,7 +13,6 @@ import {
   getDocumentSignedUrl,
   reviewDocument,
   fetchDocumentEvents,
-  translateDbError,
   formatDateFR,
   typeLabelFromMimeType,
 } from "../lib/supabase";
@@ -21,7 +21,7 @@ export function ValidationPage({
   documents,
   courses,
   profiles,
-  userId,
+  userId: _userId,
   role,
   onRefresh,
 }: {
@@ -143,11 +143,13 @@ export function ValidationPage({
       setDownloadError(null);
       const result = await getDocumentSignedUrl(doc.storage_path);
       if (!result.ok) {
+        const errorMessage =
+          "error" in result ? result.error : "Erreur inconnue";
         setDownloadError(
-          result.error.includes("introuvable") ||
-            result.error.includes("not found")
+          errorMessage.includes("introuvable") ||
+            errorMessage.includes("not found")
             ? "Fichier introuvable dans le stockage."
-            : result.error
+            : errorMessage
         );
         return;
       }
@@ -222,13 +224,15 @@ export function ValidationPage({
               mode === "reject" ? (reason || null) : null
             );
             if (!result.ok) {
+              const errorMessage =
+                "error" in result ? result.error : "Erreur inconnue";
               console.error(
                 `Erreur review_document (${doc.id}):`,
-                result.code,
-                result.message
+                errorMessage
               );
+              return { id: doc.id, ok: false, error: errorMessage };
             }
-            return { id: doc.id, ok: result.ok, error: result.error };
+            return { id: doc.id, ok: true, error: undefined };
           } catch (err) {
             console.error(
               `Exception review_document (${doc.id}):`,
@@ -306,7 +310,9 @@ export function ValidationPage({
         setReopenReason("");
         await onRefresh();
       } else {
-        setError(result.error, result.code, result.message);
+        const errorMessage =
+          "error" in result ? result.error : "Erreur inconnue";
+        setError(errorMessage);
         setReopenConfirmOpen(true);
       }
     } catch (err) {
@@ -795,7 +801,7 @@ export function ValidationPage({
                       className="reset-filters"
                       onClick={() => handleDownload(doc)}
                     >
-                      <span>↓</span> Télécharger
+                      <Download size={16} strokeWidth={1.8} /> Télécharger
                     </button>
 
                     <button

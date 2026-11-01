@@ -42,9 +42,6 @@ export function UploadPage({
   const [globalError, setGlobalError] = useState<string | null>(null);
 
   const hasFiles = uploads.length > 0;
-  const hasPending = uploads.some(
-    (u) => u.status === "idle" || u.status === "uploading"
-  );
   const hasErrors = uploads.some((u) => u.status === "error");
 
   function triggerFileInput() {
@@ -69,10 +66,12 @@ export function UploadPage({
     }));
 
     // Validate each file immediately
-    const validated = newEntries.map((entry) => {
+    const validated = newEntries.map((entry): UploadFileEntry => {
       const validation = validateFile(entry.file);
       if (!validation.ok) {
-        return { ...entry, status: "error", error: validation.error };
+        const errorMessage =
+          "error" in validation ? validation.error : "Erreur inconnue";
+        return { ...entry, status: "error", error: errorMessage };
       }
       return entry;
     });
@@ -120,8 +119,7 @@ export function UploadPage({
       return;
     }
 
-    const courseRecord = courses.find((c) => c.name === course);
-    const courseId = courseRecord?.id ?? null;
+    const courseId = course;
 
     setSubmitting(true);
 
@@ -155,10 +153,12 @@ export function UploadPage({
     );
 
     if (!uploadResult.ok) {
+      const errorMessage =
+        "error" in uploadResult ? uploadResult.error : "Erreur inconnue";
       setUploads((prev) =>
         prev.map((u) =>
           u.id === entry.id
-            ? { ...u, status: "error", error: uploadResult.error }
+            ? { ...u, status: "error", error: errorMessage }
             : u
         )
       );
@@ -178,10 +178,12 @@ export function UploadPage({
     });
 
     if (!insertResult.ok) {
+      const errorMessage =
+        "error" in insertResult ? insertResult.error : "Erreur inconnue";
       setUploads((prev) =>
         prev.map((u) =>
           u.id === entry.id
-            ? { ...u, status: "error", error: insertResult.error }
+            ? { ...u, status: "error", error: errorMessage }
             : u
         )
       );
@@ -349,7 +351,7 @@ export function UploadPage({
                 return (
                   <optgroup key={sem} label={`Semestre ${sem}`}>
                     {semCourses.map((c) => (
-                      <option key={c.code} value={c.name}>
+                      <option key={c.code} value={c.id}>
                         {c.name}
                       </option>
                     ))}

@@ -73,7 +73,7 @@ export function FlowAssistant({ onClose }: FlowAssistantProps) {
           <div>
             <strong>Flow Assistant</strong>
             <span className="flow-badge">
-              <Sparkles size={10} /> Propulsé par Gemini
+              <Sparkles size={10} /> Assistant bientôt disponible
             </span>
           </div>
         </div>

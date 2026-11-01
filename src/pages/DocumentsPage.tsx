@@ -5,7 +5,6 @@ import {
   getDocumentSignedUrl,
   formatDateFR,
   typeLabelFromMimeType,
-  translateDbError,
 } from "../lib/supabase";
 
 const PAGE_SIZE = 8;
@@ -44,11 +43,12 @@ export function DocumentsPage({
     setDownloadError(null);
     const result = await getDocumentSignedUrl(doc.storage_path);
     if (!result.ok) {
+      const errorMessage = "error" in result ? result.error : "Erreur inconnue";
       setDownloadError(
-        result.error.includes("introuvable") ||
-          result.error.includes("not found")
+        errorMessage.includes("introuvable") ||
+          errorMessage.includes("not found")
           ? "Fichier introuvable dans le stockage."
-          : result.error
+          : errorMessage
       );
       return;
     }

@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen, Download, FileText, Play } from "lucide-react";
+import { ArrowRight, Download, FileText } from "lucide-react";
 import { useState } from "react";
 import {
   getDocumentSignedUrl,
@@ -21,27 +21,25 @@ export function CoursesPage({
   userId: string;
 }) {
   const [downloadError, setDownloadError] = useState<string | null>(null);
-  const courseById = new Map(courses.map((c) => [c.id, c.name]));
-  const courseNameFor = (doc: DocumentItem) =>
-    doc.courseId !== undefined ? courseById.get(doc.courseId) ?? "—" : "—";
 
   // Construire les ressources par cours à partir des documents de la base
-  const courseResources: Record<string, { name: string; type: string; date: string }[]> = {};
+  const courseResources: Record<string, { name: string; type: string; date: string; storage_path: string }[]> = {};
   for (const doc of documents) {
-    const courseName = courseNameFor(doc);
-    if (!courseResources[courseName]) {
-      courseResources[courseName] = [];
+    if (doc.courseId === undefined) continue;
+    if (!courseResources[doc.courseId]) {
+      courseResources[doc.courseId] = [];
     }
-    courseResources[courseName].push({
+    courseResources[doc.courseId].push({
       name: doc.name,
       type: typeLabelFromMimeType(doc.mime_type),
       date: formatDateFR(doc.date),
+      storage_path: doc.storage_path,
     });
   }
   // S'assurer que tous les cours ont une entrée (même vide)
   for (const course of courses) {
-    if (!courseResources[course.name]) {
-      courseResources[course.name] = [];
+    if (!courseResources[course.id]) {
+      courseResources[course.id] = [];
     }
   }
 
@@ -51,11 +49,30 @@ export function CoursesPage({
     setDownloadError(null);
     const result = await getDocumentSignedUrl(doc.storage_path);
     if (!result.ok) {
+      const errorMessage =
+        "error" in result ? result.error : "Erreur inconnue";
       setDownloadError(
-        result.error.includes("introuvable") ||
-          result.error.includes("not found")
+        errorMessage.includes("introuvable") ||
+          errorMessage.includes("not found")
           ? "Fichier introuvable dans le stockage."
-          : result.error
+          : errorMessage
+      );
+      return;
+    }
+    window.location.href = result.url;
+  }
+
+  async function handleResourceDownload(resource: { name: string; storage_path: string }) {
+    setDownloadError(null);
+    const result = await getDocumentSignedUrl(resource.storage_path);
+    if (!result.ok) {
+      const errorMessage =
+        "error" in result ? result.error : "Erreur inconnue";
+      setDownloadError(
+        errorMessage.includes("introuvable") ||
+          errorMessage.includes("not found")
+          ? "Fichier introuvable dans le stockage."
+          : errorMessage
       );
       return;
     }
@@ -68,7 +85,7 @@ export function CoursesPage({
         doc.uploaded_by === userId &&
         doc.status === "approved" &&
         doc.courseId !== undefined &&
-        courseNameFor(doc) === course.name
+        doc.courseId === course.id
     ).length;
 
   const coursesBySemester = courses.reduce(
@@ -82,13 +99,13 @@ export function CoursesPage({
   );
 
   if (selected) {
-    const resources = courseResources[selected.name] ?? [];
+    const resources = courseResources[selected.id] ?? [];
 
     const courseDeposits = documents.filter(
       (doc) =>
         doc.uploaded_by === userId &&
         doc.courseId !== undefined &&
-        courseNameFor(doc) === selected.name
+        doc.courseId === selected.id
     );
 
     return (
@@ -148,11 +165,7 @@ export function CoursesPage({
               <button
                 className="download-button"
                 aria-label={`Télécharger ${resource.name}`}
-                onClick={() =>
-                  alert(
-                    "Le téléchargement de cette ressource de démonstration sera disponible après connexion au stockage."
-                  )
-                }
+                onClick={() => handleResourceDownload(resource)}
               >
                 <Download size={16} strokeWidth={1.8} />
               </button>

@@ -1,8 +1,8 @@
 import {
-  ArrowDownToLine,
   ArrowRight,
   BookOpen,
   BookMarked,
+  Download,
   CheckCircle2,
   ChevronRight,
   CloudUpload,
@@ -11,7 +11,6 @@ import {
   MoreHorizontal,
   ShieldCheck,
   Sparkles,
-  Play,
 } from "lucide-react";
 import { useState } from "react";
 import { getDocumentSignedUrl } from "../lib/supabase";
@@ -68,11 +67,13 @@ export function OverviewPage({
     setDownloadError(null);
     const result = await getDocumentSignedUrl(doc.storage_path);
     if (!result.ok) {
+      const errorMessage =
+        "error" in result ? result.error : "Erreur inconnue";
       setDownloadError(
-        result.error.includes("introuvable") ||
-          result.error.includes("not found")
+        errorMessage.includes("introuvable") ||
+          errorMessage.includes("not found")
           ? "Fichier introuvable dans le stockage."
-          : result.error
+          : errorMessage
       );
       return;
     }
@@ -212,9 +213,7 @@ export function OverviewPage({
           <div className="course-list">
             {courses.map((course) => {
               const validatedDocs = documents.filter(
-                (doc) =>
-                  doc.courseId !== undefined &&
-                  courseById.get(doc.courseId) === course.name
+                (doc) => doc.courseId !== undefined && doc.courseId === course.id
               ).length;
 
               return (
@@ -356,7 +355,7 @@ export function OverviewPage({
                   aria-label={`Télécharger ${doc.name}`}
                   onClick={() => handleDownload(doc)}
                 >
-                  <ArrowDownToLine size={17} />
+                  <Download size={16} strokeWidth={1.8} />
                 </button>
               </div>
             ))}
