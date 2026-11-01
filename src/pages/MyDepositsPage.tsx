@@ -1,32 +1,29 @@
 import { useState, useCallback } from "react";
 import { Clock3, CheckCircle2, FileText, ShieldCheck, X } from "lucide-react";
-import type { DocumentItem, User } from "../types";
+import type { Course, DocumentItem, User } from "../types";
 import {
   getDocumentSignedUrl,
-  translateDbError,
+  formatDateFR,
+  typeLabelFromMimeType,
 } from "../lib/supabase";
-
-const MONTHS_FR = [
-  "janv.", "févr.", "mars", "avr.", "mai", "juin",
-  "juil.", "août", "sept.", "oct.", "nov.", "déc.",
-];
-
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return `${d.getDate()} ${MONTHS_FR[d.getMonth()]} ${d.getFullYear()}`;
-}
 
 export function MyDepositsPage({
   documents,
+  courses,
   profiles,
   userId,
 }: {
   documents: DocumentItem[];
+  courses: Course[];
   profiles: User[];
   userId: string;
 }) {
   const [filter, setFilter] = useState("Tous");
   const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  const courseById = new Map(courses.map((c) => [c.id, c.name]));
+  const courseNameFor = (doc: DocumentItem) =>
+    doc.courseId !== undefined ? courseById.get(doc.courseId) ?? "—" : "—";
 
   const profileById = new Map(
     profiles.map((p) => [p.id, p.name ?? p.email ?? "Utilisateur inconnu"])
@@ -166,7 +163,9 @@ export function MyDepositsPage({
                       <strong>{doc.name}</strong>
 
                       <span>
-                        {doc.course} · {formatDate(doc.date)} · {doc.size}
+                        {typeLabelFromMimeType(doc.mime_type)} ·
+                        {courseNameFor(doc)} ·
+                        {formatDateFR(doc.date)} · {doc.size}
                       </span>
 
                       {author && (

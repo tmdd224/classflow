@@ -1,6 +1,10 @@
 import { ArrowRight, FileText } from "lucide-react";
 import { useState } from "react";
-import { getDocumentSignedUrl } from "../lib/supabase";
+import {
+  getDocumentSignedUrl,
+  formatDateFR,
+  typeLabelFromMimeType,
+} from "../lib/supabase";
 import type { Course, DocumentItem } from "../types";
 
 export function CoursesPage({
@@ -17,16 +21,21 @@ export function CoursesPage({
   userId: string;
 }) {
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const courseById = new Map(courses.map((c) => [c.id, c.name]));
+  const courseNameFor = (doc: DocumentItem) =>
+    doc.courseId !== undefined ? courseById.get(doc.courseId) ?? "—" : "—";
+
   // Construire les ressources par cours à partir des documents de la base
   const courseResources: Record<string, { name: string; type: string; date: string }[]> = {};
   for (const doc of documents) {
-    if (!courseResources[doc.course]) {
-      courseResources[doc.course] = [];
+    const courseName = courseNameFor(doc);
+    if (!courseResources[courseName]) {
+      courseResources[courseName] = [];
     }
-    courseResources[doc.course].push({
+    courseResources[courseName].push({
       name: doc.name,
-      type: doc.mime_type,
-      date: doc.date,
+      type: typeLabelFromMimeType(doc.mime_type),
+      date: formatDateFR(doc.date),
     });
   }
   // S'assurer que tous les cours ont une entrée (même vide)
@@ -161,8 +170,7 @@ export function CoursesPage({
               <div className="document-head">
                 <span>NOM DU DOCUMENT</span>
                 <span>STATUT</span>
-                <span>DATE</span>
-                <span>TAILLE</span>
+                <span>DATE / TAILLE</span>
                 <span />
               </div>
               {courseDeposits.map((doc) => (
@@ -190,8 +198,9 @@ export function CoursesPage({
                           : "En attente"}
                     </span>
                   </span>
-                  <span className="document-date">{doc.date}</span>
-                  <span className="document-size">{doc.size}</span>
+                  <span className="document-date">
+                    {formatDateFR(doc.date)} · {doc.size}
+                  </span>
 
                   <button
                     className="download-button"

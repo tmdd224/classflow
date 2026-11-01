@@ -5,7 +5,6 @@ import {
   GraduationCap,
   LayoutDashboard,
   LogOut,
-  MoreHorizontal,
   Search,
   Settings,
   Sparkles,
@@ -279,12 +278,14 @@ function App() {
           <div className="profile-mini">
             <div className="profile-avatar">{avatarInitials}</div>
 
-            <div className="profile-copy">
-              <strong>{displayName}</strong>
-              <span>{roleLabel}</span>
+            <div className="profile-row">
+              <div className="profile-copy">
+                <strong className="profile-name" title={displayName}>
+                  {displayName}
+                </strong>
+                <span className="profile-role">{roleLabel}</span>
+              </div>
             </div>
-
-            <MoreHorizontal size={19} className="muted-icon" />
 
             <button className="logout-button" onClick={signOut}>
               <LogOut size={15} />
@@ -357,6 +358,7 @@ function App() {
           ) : activePage === "documents" ? (
             <DocumentsPage
               documents={documentsData}
+              courses={coursesData}
               query={query}
             />
           ) : activePage === "upload" ? (
@@ -374,6 +376,7 @@ function App() {
             role === "etudiant" ? (
               <MyDepositsPage
                 documents={documentsData}
+                courses={coursesData}
                 profiles={profilesData}
                 userId={user?.id ?? ""}
               />

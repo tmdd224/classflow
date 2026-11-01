@@ -21,6 +21,7 @@ import type {
   DocumentItem,
   PageKey,
 } from "../types";
+import { formatDateFR, typeLabelFromMimeType } from "../lib/supabase";
 
 export function OverviewPage({
   courses,
@@ -42,6 +43,10 @@ export function OverviewPage({
   const firstName = currentUserName.split(" ")[0];
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
+  const courseById = new Map(courses.map((c) => [c.id, c.name]));
+  const courseNameFor = (doc: DocumentItem) =>
+    doc.courseId !== undefined ? courseById.get(doc.courseId) ?? "—" : "—";
+
   const myDocuments = documents.filter((doc) => doc.uploaded_by === userId);
 
   const myPending = myDocuments.filter(
@@ -49,7 +54,7 @@ export function OverviewPage({
   ).length;
 
   const filteredDocuments = documents.filter((doc) =>
-    `${doc.name} ${doc.course}`
+    `${doc.name} ${courseNameFor(doc)}`
       .toLowerCase()
       .includes(query.toLowerCase())
   );
@@ -274,7 +279,7 @@ export function OverviewPage({
                   key={doc.id}
                   icon={<FileText />}
                   title={doc.name}
-                  detail={doc.course}
+                  detail={courseNameFor(doc)}
                   time={doc.date}
                   tone={doc.mime_type === "application/pdf" ? "purple" : "blue"}
                 />
@@ -309,9 +314,9 @@ export function OverviewPage({
         <div className="document-table">
           <div className="document-head">
             <span>NOM DU DOCUMENT</span>
+            <span>TYPE</span>
             <span>COURS</span>
-            <span>AJOUTÉ LE</span>
-            <span>TAILLE</span>
+            <span>DATE / TAILLE</span>
             <span />
           </div>
 
@@ -326,9 +331,13 @@ export function OverviewPage({
                   <strong>{doc.name}</strong>
                 </div>
 
-                <span className="document-course">{doc.course}</span>
-                <span className="document-date">{doc.date}</span>
-                <span className="document-size">{doc.size}</span>
+                <span className="document-course">
+                  {typeLabelFromMimeType(doc.mime_type)}
+                </span>
+                <span className="document-course">{courseNameFor(doc)}</span>
+                <span className="document-date">
+                  {formatDateFR(doc.date)} · {doc.size}
+                </span>
 
                 <button
                   className="download-button"

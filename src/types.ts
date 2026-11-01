@@ -110,7 +110,6 @@ export type DocumentDB = {
   size_bytes: number;
   description: string | null;
   course_id: string | null;
-  course: string;
   uploaded_by: string;
   status: DocumentStatus;
   visibility: string;

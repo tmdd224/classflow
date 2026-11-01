@@ -141,7 +141,7 @@ export function dbToDocumentItem(db: DocumentDB): DocumentItem {
     mime_type: db.mime_type,
     size_bytes: db.size_bytes,
     size: formatFileSize(db.size_bytes),
-    course: db.course,
+    course: "",
     courseId: db.course_id ?? undefined,
     date: db.created_at,
     color,
@@ -274,6 +274,52 @@ export function mimeTypeFromExtension(extension: string): string | null {
 }
 
 /**
+ * Traduit un mime_type en libellé lisible (PDF, Word, PowerPoint, Excel, CSV, Image, ZIP, Notebook, Texte).
+ * Jamais le mime_type brut à l'écran.
+ */
+export function typeLabelFromMimeType(mime_type: string): string {
+  switch (mime_type) {
+    case "application/pdf":
+      return "PDF";
+    case "application/msword":
+    case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+      return "Word";
+    case "application/vnd.ms-powerpoint":
+    case "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+      return "PowerPoint";
+    case "application/vnd.ms-excel":
+    case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+      return "Excel";
+    case "text/csv":
+      return "CSV";
+    case "text/plain":
+      return "Texte";
+    case "image/png":
+    case "image/jpeg":
+      return "Image";
+    case "application/zip":
+      return "ZIP";
+    case "application/x-ipynb+json":
+      return "Notebook";
+    default:
+      return "Fichier";
+  }
+}
+
+const MONTHS_FR_SHORT = [
+  "janv.", "févr.", "mars", "avr.", "mai", "juin",
+  "juil.", "août", "sept.", "oct.", "nov.", "déc.",
+];
+
+/**
+ * Formate une date ISO au format français « 31 oct. 2026 ».
+ */
+export function formatDateFR(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getDate()} ${MONTHS_FR_SHORT[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+/**
  * Valide un fichier côté client (extension + taille).
  * Retourne { ok: true, mime_type } ou { ok: false, error }.
  */
@@ -368,7 +414,6 @@ export async function insertDocument(document: {
   size_bytes: number;
   description: string | null;
   course_id: string | null;
-  course: string | null;
   uploaded_by: string;
 }): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const { data, error } = await supabase
@@ -382,7 +427,6 @@ export async function insertDocument(document: {
         size_bytes: document.size_bytes,
         description: document.description,
         course_id: document.course_id,
-        course: document.course,
         uploaded_by: document.uploaded_by,
       },
     ])

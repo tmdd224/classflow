@@ -5,36 +5,28 @@ import {
   FileText,
   ShieldCheck,
   X,
-  RefreshCw,
-  Download,
   List,
 } from "lucide-react";
-import type { DocumentItem, Role, User } from "../types";
+import type { Course, DocumentItem, Role, User } from "../types";
 import {
   getDocumentSignedUrl,
   reviewDocument,
   fetchDocumentEvents,
   translateDbError,
+  formatDateFR,
+  typeLabelFromMimeType,
 } from "../lib/supabase";
-
-const MONTHS_FR = [
-  "janv.", "fevr.", "mars", "avr.", "mai", "juin",
-  "juil.", "aout", "sept.", "oct.", "nov.", "dec.",
-];
-
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return `${d.getDate()} ${MONTHS_FR[d.getMonth()]} ${d.getFullYear()}`;
-}
 
 export function ValidationPage({
   documents,
+  courses,
   profiles,
   userId,
   role,
   onRefresh,
 }: {
   documents: DocumentItem[];
+  courses: Course[];
   profiles: User[];
   userId: string;
   role: Role;
@@ -44,12 +36,31 @@ export function ValidationPage({
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [reasonDocId, setReasonDocId] = useState<string | null>(null);
-  const [reasonType, setReasonType] = useState<"reject" | "reopen" | null>(
-    null
-  );
-  const [reasonText, setReasonText] = useState("");
+
+  // Sélection par lot
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectAllChecked, setSelectAllChecked] = useState(false);
+
+  // Action par lot en cours de confirmation
+  const [batchMode, setBatchMode] = useState<"approve" | "reject" | null>(null);
+  const [batchConfirmOpen, setBatchConfirmOpen] = useState(false);
+  const [batchReason, setBatchReason] = useState("");
+
+  // Traitement par lot
+  const [batchProcessing, setBatchProcessing] = useState(false);
+  const [batchProgress, setBatchProgress] = useState<{
+    current: number;
+    total: number;
+    success: number;
+    failures: Array<{ id: string; error: string }>;
+  }>({ current: 0, total: 0, success: 0, failures: [] });
+  const [batchResult, setBatchResult] = useState<{
+    mode: "approve" | "reject";
+    success: number;
+    failures: Array<{ id: string; error: string }>;
+  } | null>(null);
+
+  // Historique des événements
   const [eventsByDoc, setEventsByDoc] = useState<Record<string, any[]>>({});
   const [eventsLoading, setEventsLoading] = useState<Record<string, boolean>>(
     {}
@@ -65,6 +76,10 @@ export function ValidationPage({
   const profileById = new Map(
     profiles.map((p) => [p.id, p.name ?? p.email ?? "Utilisateur inconnu"])
   );
+
+  const courseById = new Map(courses.map((c) => [c.id, c.name]));
+  const courseNameFor = (doc: DocumentItem) =>
+    doc.courseId !== undefined ? courseById.get(doc.courseId) ?? "—" : "—";
 
   // Les documents "En attente" passent en premier
   const pendingDocs = documents.filter(
@@ -87,17 +102,22 @@ export function ValidationPage({
     if (filter === "En attente") {
       return !doc.status || doc.status === "pending";
     }
-
     if (filter === "Valides") {
       return doc.status === "approved";
     }
-
     if (filter === "Refuses") {
       return doc.status === "rejected";
     }
-
     return true;
   });
+
+  const selectedCount = selectedIds.size;
+  const hasSelection = selectedCount > 0;
+  const canBatchValidate = canValidate && hasSelection;
+
+  const isPending = (doc: DocumentItem) =>
+    !doc.status || doc.status === "pending";
+  const isSelected = (docId: string) => selectedIds.has(docId);
 
   const handleDownload = useCallback(
     async (doc: DocumentItem) => {
@@ -117,89 +137,112 @@ export function ValidationPage({
     []
   );
 
-  const handleValidate = useCallback(
-    async (doc: DocumentItem) => {
-      setActionError(null);
-      setActionSuccess(null);
-      setActionLoading(true);
-      try {
-        const result = await reviewDocument(doc.id, "approved", null);
-        if (result.ok) {
-          setActionSuccess("Document valide avec succes.");
-          await onRefresh();
-        } else {
-          setActionError(result.error);
-        }
-      } finally {
-        setActionLoading(false);
+  const toggleSelection = (docId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(docId)) {
+        next.delete(docId);
+      } else {
+        next.add(docId);
       }
-    },
-    [onRefresh]
-  );
+      return next;
+    });
+    if (selectAllChecked) setSelectAllChecked(false);
+  };
 
-  const handleConfirmReject = useCallback(
-    async (doc: DocumentItem) => {
-      if (!reasonText.trim()) {
-        setActionError("Un motif de refus est obligatoire.");
-        return;
-      }
-      setActionError(null);
-      setActionSuccess(null);
-      setActionLoading(true);
-      try {
-        const result = await reviewDocument(
-          doc.id,
-          "rejected",
-          reasonText.trim()
-        );
-        if (result.ok) {
-          setActionSuccess("Document refuse avec succes.");
-          setReasonDocId(null);
-          setReasonType(null);
-          setReasonText("");
-          await onRefresh();
-        } else {
-          setActionError(result.error);
-        }
-      } finally {
-        setActionLoading(false);
-      }
-    },
-    [reasonText, onRefresh]
-  );
+  const toggleSelectAll = () => {
+    if (selectAllChecked) {
+      setSelectedIds(new Set());
+      setSelectAllChecked(false);
+    } else {
+      const ids = new Set(pendingDocs.map((d) => d.id));
+      setSelectedIds(ids);
+      setSelectAllChecked(true);
+    }
+  };
 
-  const handleConfirmReopen = useCallback(
-    async (doc: DocumentItem) => {
-      if (!reasonText.trim()) {
-        setActionError(
-          "Un motif est obligatoire pour rouvrir la decision."
-        );
-        return;
-      }
-      setActionError(null);
-      setActionSuccess(null);
-      setActionLoading(true);
-      try {
-        const result = await reviewDocument(
-          doc.id,
-          "reopened",
-          reasonText.trim()
-        );
-        if (result.ok) {
-          setActionSuccess("Decision revisee avec succes.");
-          setReasonDocId(null);
-          setReasonType(null);
-          setReasonText("");
-          await onRefresh();
-        } else {
-          setActionError(result.error);
-        }
-      } finally {
-        setActionLoading(false);
-      }
-    },
-    [reasonText, onRefresh]
-  );
+  const startBatchAction = (mode: "approve" | "reject") => {
+    if (!hasSelection || !canValidate) return;
+    setBatchMode(mode);
+    setBatchReason("");
+    setBatchConfirmOpen(true);
+    setActionError(null);
+    setActionSuccess(null);
+  };
+
+  const cancelBatch = () => {
+    setBatchConfirmOpen(false);
+    setBatchMode(null);
+    setBatchReason("");
+    setActionError(null);
+    setActionSuccess(null);
+  };
+
+  const processBatch = async () => {
+    const mode = batchMode;
+    const reason = batchReason.trim();
+    const docsToProcess = pendingDocs.filter((d) => selectedIds.has(d.id));
+    if (docsToProcess.length === 0 || !mode) {
+      cancelBatch();
+      return;
+    }
+
+    setBatchConfirmOpen(false);
+    setBatchProcessing(true);
+    setBatchProgress({ current: 0, total: docsToProcess.length, success: 0, failures: [] });
+
+    const MAX_PARALLEL = 3;
+    const allResults: Array<{ id: string; ok: boolean; error?: string }> = [];
+
+    for (let i = 0; i < docsToProcess.length; i += MAX_PARALLEL) {
+      const batch = docsToProcess.slice(i, i + MAX_PARALLEL);
+      const batchResults = await Promise.all(
+        batch.map(async (doc) => {
+          try {
+            const result = await reviewDocument(
+              doc.id,
+              mode === "approve" ? "approved" : "rejected",
+              mode === "reject" ? (reason || null) : null
+            );
+            return { id: doc.id, ok: result.ok, error: result.error };
+          } catch (err) {
+            return { id: doc.id, ok: false, error: translateDbError(err) };
+          }
+        })
+      );
+      allResults.push(...batchResults);
+
+      const successCount = allResults.filter((r) => r.ok).length;
+      const failures = allResults.filter((r) => !r.ok);
+      setBatchProgress({
+        current: Math.min(i + batch.length, docsToProcess.length),
+        total: docsToProcess.length,
+        success: successCount,
+        failures: failures.map((f) => ({
+          id: f.id,
+          error: f.error ?? "Erreur inconnue",
+        })),
+      });
+    }
+
+    setBatchProcessing(false);
+    setBatchResult({
+      mode,
+      success: allResults.filter((r) => r.ok).length,
+      failures: allResults
+        .filter((r) => !r.ok)
+        .map((r) => ({ id: r.id, error: r.error ?? "Erreur inconnue" })),
+    });
+
+    // Réinitialiser la sélection et l'état de lot
+    setSelectedIds(new Set());
+    setSelectAllChecked(false);
+    setBatchMode(null);
+    setBatchReason("");
+
+    // Recharger les données
+    await onRefresh();
+  };
 
   const handleFetchEvents = useCallback(
     async (doc: DocumentItem) => {
@@ -226,8 +269,6 @@ export function ValidationPage({
       }
     }
   };
-
-  const isActingOn = (docId: string) => reasonDocId === docId;
 
   return (
     <div className="validation-page">
@@ -283,40 +324,230 @@ export function ValidationPage({
         </div>
       </div>
 
+      {/* Barre d'action fixe par lot */}
+      {hasSelection && canBatchValidate && !batchProcessing && !batchResult && (
+        <div className="batch-action-bar">
+          <span>{selectedCount} sélectionné</span>
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => startBatchAction("approve")}
+          >
+            Valider la sélection
+          </button>
+          <button
+            type="button"
+            className="primary-button"
+            style={{ background: "#c44", borderColor: "#c44" }}
+            onClick={() => startBatchAction("reject")}
+          >
+            Refuser la sélection
+          </button>
+          <button
+            type="button"
+            className="text-button"
+            onClick={() => {
+              setSelectedIds(new Set());
+              setSelectAllChecked(false);
+            }}
+          >
+            Désélectionner tout
+          </button>
+        </div>
+      )}
+
+      {/* Modal de confirmation du lot */}
+      {batchConfirmOpen && (
+        <div className="batch-modal-overlay" onClick={cancelBatch}>
+          <div className="batch-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="batch-modal-header">
+              <h3>
+                {batchMode === "approve"
+                  ? "Valider la sélection"
+                  : "Refuser la sélection"}
+              </h3>
+              <p>
+                {selectedCount} document{selectedCount > 1 ? "s" : ""} va
+                {batchMode === "approve" ? "être validé" : "être refusé"}.
+              </p>
+            </div>
+
+            {batchMode === "reject" && (
+              <div className="batch-modal-body">
+                <label>Motif du refus (obligatoire) :</label>
+                <textarea
+                  value={batchReason}
+                  onChange={(e) => setBatchReason(e.target.value)}
+                  rows={3}
+                  placeholder="Motif du refus applicable à tous les documents sélectionnés"
+                />
+                {!batchReason.trim() && (
+                  <span className="batch-modal-error">
+                    Un motif est obligatoire pour refuser.
+                  </span>
+                )}
+              </div>
+            )}
+
+            <div className="batch-modal-footer">
+              <button
+                type="button"
+                className="text-button"
+                onClick={cancelBatch}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                className="primary-button"
+                onClick={processBatch}
+                disabled={batchMode === "reject" && !batchReason.trim()}
+              >
+                Confirmer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Overlay de traitement */}
+      {batchProcessing && (
+        <div className="batch-modal-overlay" style={{ pointerEvents: "none" }}>
+          <div className="batch-modal">
+            <div className="batch-modal-header">
+              <h3>
+                {batchMode === "approve" ? "Validation en cours" : "Refus en cours"}
+              </h3>
+              <p>
+                {batchProgress.current} / {batchProgress.total} document{
+                  batchProgress.total > 1 ? "s" : ""
+                }
+              </p>
+            </div>
+            <div className="batch-modal-body">
+              <div className="batch-progress">
+                <div
+                  className="batch-progress-fill"
+                  style={{
+                    width: `${(batchProgress.current / batchProgress.total) * 100}%`,
+                  }}
+                />
+              </div>
+              <p className="batch-progress-text">
+                {batchProgress.success} réussi{
+                  batchProgress.success > 1 ? "s" : ""
+                },
+                {batchProgress.failures.length} échec{
+                  batchProgress.failures.length > 1 ? "s" : ""
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rapport de résultat du lot */}
+      {batchResult && (
+        <div
+          className="batch-modal-overlay"
+          onClick={() => setBatchResult(null)}
+        >
+          <div className="batch-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="batch-modal-header">
+              <h3>
+                {batchResult.mode === "approve"
+                  ? "Validation terminée"
+                  : "Refus terminé"}
+              </h3>
+            </div>
+            <div className="batch-modal-body">
+              <p>
+                {batchResult.success} document{
+                  batchResult.success > 1 ? "s" : ""
+                } traité{batchResult.success > 1 ? "s" : ""} avec succès.
+              </p>
+              {batchResult.failures.length > 0 && (
+                <>
+                  <p className="batch-modal-error">
+                    {batchResult.failures.length} échec{
+                      batchResult.failures.length > 1 ? "s" : ""
+                    }:
+                  </p>
+                  <ul>
+                    {batchResult.failures.map((f) => (
+                      <li key={f.id}>
+                        Document {f.id}: {f.error}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
+            <div className="batch-modal-footer">
+              <button
+                type="button"
+                className="primary-button"
+                onClick={() => setBatchResult(null)}
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <section className="panel validation-panel">
         <div className="section-heading">
           <div>
             <span className="section-kicker">SUIVI ACADEMIQUE</span>
-            <h3>Documents deposes</h3>
+            <h3>Documents déposés</h3>
           </div>
 
-          <select
-            className="validation-filter"
-            value={filter}
-            onChange={(event) => setFilter(event.target.value)}
-          >
-            <option value="Tous">Tous</option>
-            <option value="En attente">En attente</option>
-            <option value="Valides">Valides</option>
-            <option value="Refuses">Refuses</option>
-          </select>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <input
+              type="checkbox"
+              id="select-all"
+              checked={selectAllChecked}
+              onChange={toggleSelectAll}
+              disabled={!canValidate || pendingDocs.length === 0}
+            />
+            <label htmlFor="select-all" className="select-all-label">
+              Tout sélectionner
+            </label>
+            <span className="select-all-count">
+              ({pendingDocs.length} en attente)
+            </span>
+
+            <select
+              className="validation-filter"
+              value={filter}
+              onChange={(event) => setFilter(event.target.value)}
+              style={{ marginLeft: "auto" }}
+            >
+              <option value="Tous">Tous</option>
+              <option value="En attente">En attente</option>
+              <option value="Valides">Valides</option>
+              <option value="Refuses">Refuses</option>
+            </select>
+          </div>
         </div>
 
         {filteredDocuments.length === 0 ? (
           <div className="validation-empty">
             <ShieldCheck size={35} />
 
-            <h3>Aucun document a afficher</h3>
+            <h3>Aucun document à afficher</h3>
 
             <p>
-              Les documents deposes apparaitront ici pour etre examines.
+              Les documents déposés apparaîtront ici pour être examinés.
             </p>
           </div>
         ) : (
           <div className="validation-list">
             {filteredDocuments.map((doc) => {
               const author = profileById.get(doc.uploaded_by);
-              const isPending = !doc.status || doc.status === "pending";
+              const docIsPending = isPending(doc);
+              const docIsSelected = isSelected(doc.id);
               const events = eventsByDoc[doc.id];
               const isLoadingEvents = eventsLoading[doc.id];
               const isExpanded = eventsExpanded[doc.id];
@@ -324,6 +555,17 @@ export function ValidationPage({
               return (
                 <article className="validation-item" key={doc.id}>
                   <div className="validation-document-header">
+                    {canValidate && docIsPending && (
+                      <div className="selection-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={docIsSelected}
+                          onChange={() => toggleSelection(doc.id)}
+                          disabled={batchProcessing || batchResult !== null}
+                        />
+                      </div>
+                    )}
+
                     <div className={`file-icon ${doc.color}`}>
                       <FileText size={20} />
                     </div>
@@ -332,7 +574,9 @@ export function ValidationPage({
                       <strong>{doc.name}</strong>
 
                       <span>
-                        {doc.course} · {formatDate(doc.date)} · {doc.size}
+                        {typeLabelFromMimeType(doc.mime_type)} ·
+                        {courseNameFor(doc)} ·
+                        {formatDateFR(doc.date)} · {doc.size}
                       </span>
 
                       {author && (
@@ -371,93 +615,25 @@ export function ValidationPage({
                   )}
 
                   <div className="validation-actions">
-                    {canValidate && isPending && (
+                    {canValidate && docIsPending && !batchProcessing && !batchResult ? (
                       <>
-                        <button
-                          type="button"
-                          className="primary-button"
-                          onClick={() => handleValidate(doc)}
-                          disabled={actionLoading || isActingOn(doc.id)}
-                        >
-                          Valider
-                        </button>
-                        <button
-                          type="button"
-                          className="text-button"
-                          onClick={() => {
-                            setReasonDocId(doc.id);
-                            setReasonType("reject");
-                            setReasonText("");
-                          }}
-                          disabled={actionLoading}
-                        >
-                          Refuser
-                        </button>
-                      </>
-                    )}
-
-                    {canValidate && !isPending && (
-                      <button
-                        type="button"
-                        className="text-button"
-                        onClick={() => {
-                          setReasonDocId(doc.id);
-                          setReasonType("reopen");
-                          setReasonText("");
-                        }}
-                        disabled={actionLoading || isActingOn(doc.id)}
-                      >
-                        Rouvrir / changer la decision
-                      </button>
-                    )}
-
-                    {isActingOn(doc.id) && reasonType && (
-                      <div className="action-reason">
-                        <textarea
-                          value={reasonText}
-                          onChange={(event) =>
-                            setReasonText(event.target.value)
-                          }
-                          placeholder={
-                            reasonType === "reject"
-                              ? "Motif du refus (obligatoire)"
-                              : "Motif de la revision (obligatoire)"
-                          }
-                          rows={2}
-                        />
-                        <div className="upload-actions">
+                        {docIsSelected ? (
                           <button
                             type="button"
                             className="text-button"
-                            onClick={() => {
-                              setReasonDocId(null);
-                              setReasonType(null);
-                              setReasonText("");
-                            }}
+                            onClick={() => toggleSelection(doc.id)}
                           >
-                            Annuler
+                            Désélectionner
                           </button>
-                          <button
-                            type="button"
-                            className="primary-button"
-                            onClick={
-                              reasonType === "reject"
-                                ? () => handleConfirmReject(doc)
-                                : () => handleConfirmReopen(doc)
-                            }
-                            disabled={actionLoading || !reasonText.trim()}
-                          >
-                            {actionLoading ? "Traitement…" : "Confirmer"}
-                          </button>
-                        </div>
-                      </div>
-                    )}
+                        ) : null}
+                      </>
+                    ) : null}
 
                     <button
                       className="reset-filters"
                       onClick={() => handleDownload(doc)}
                     >
-                      <span>↓</span> Telecharger
+                      <span>↓</span> Télécharger
                     </button>
 
                     <button
@@ -480,7 +656,7 @@ export function ValidationPage({
                                   {event.action}
                                 </span>
                                 <span className="history-date">
-                                  {formatDate(event.created_at)}
+                                  {formatDateFR(event.created_at)}
                                 </span>
                                 {event.reason && (
                                   <span className="history-reason">

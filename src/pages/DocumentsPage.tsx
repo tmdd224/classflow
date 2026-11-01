@@ -1,17 +1,26 @@
 import { FileText } from "lucide-react";
 import { useState } from "react";
-import type { DocumentItem } from "../types";
-import { getDocumentSignedUrl, translateDbError } from "../lib/supabase";
+import type { Course, DocumentItem } from "../types";
+import {
+  getDocumentSignedUrl,
+  formatDateFR,
+  typeLabelFromMimeType,
+  translateDbError,
+} from "../lib/supabase";
 
 export function DocumentsPage({
   documents,
+  courses,
   query,
 }: {
   documents: DocumentItem[];
+  courses: Course[];
   query: string;
 }) {
   const search = query.toLowerCase().trim();
   const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  const courseById = new Map(courses.map((c) => [c.id, c.name]));
 
   const library = [...documents];
 
@@ -75,49 +84,57 @@ export function DocumentsPage({
             <span>TYPE</span>
             <span>COURS</span>
             <span>STATUT</span>
-            <span>DATE</span>
-            <span>TAILLE</span>
+            <span>DATE / TAILLE</span>
             <span />
           </div>
-          {filtered.map((doc) => (
-            <div className="document-row" key={doc.id}>
-              <div className="document-name">
-                <div className={`file-icon ${doc.color}`}>
-                  <FileText size={18} />
+          {filtered.map((doc) => {
+            const courseName =
+              doc.courseId !== undefined
+                ? courseById.get(doc.courseId) ?? "Cours inconnu"
+                : "—";
+            return (
+              <div className="document-row" key={doc.id}>
+                <div className="document-name">
+                  <div className={`file-icon ${doc.color}`}>
+                    <FileText size={18} />
+                  </div>
+
+                  <strong>{doc.name}</strong>
                 </div>
 
-                <strong>{doc.name}</strong>
-              </div>
-
-              <span className="document-course">{doc.mime_type}</span>
-              <span className="document-course">{doc.course}</span>
-              <span
-                className={`document-status ${
-                  doc.status === "approved"
-                    ? "approved"
+                <span className="document-course">
+                  {typeLabelFromMimeType(doc.mime_type)}
+                </span>
+                <span className="document-course">{courseName}</span>
+                <span
+                  className={`document-status ${
+                    doc.status === "approved"
+                      ? "approved"
+                      : doc.status === "rejected"
+                        ? "rejected"
+                        : "pending"
+                  }`}
+                >
+                  {doc.status === "approved"
+                    ? "Validé"
                     : doc.status === "rejected"
-                      ? "rejected"
-                      : "pending"
-                }`}
-              >
-                {doc.status === "approved"
-                  ? "Validé"
-                  : doc.status === "rejected"
-                    ? "Refusé"
-                    : "En attente"}
-              </span>
-              <span className="document-date">{doc.date}</span>
-              <span className="document-size">{doc.size}</span>
+                      ? "Refusé"
+                      : "En attente"}
+                </span>
+                <span className="document-date">
+                  {formatDateFR(doc.date)} · {doc.size}
+                </span>
 
-              <button
-                className="download-button"
-                onClick={() => handleDownload(doc)}
-                title="Télécharger"
-              >
-                <span>↓</span>
-              </button>
-            </div>
-          ))}
+                <button
+                  className="download-button"
+                  onClick={() => handleDownload(doc)}
+                  title="Télécharger"
+                >
+                  <span>↓</span>
+                </button>
+              </div>
+            );
+          })}
         </div>
       </section>
 
@@ -139,49 +156,57 @@ export function DocumentsPage({
               <span>TYPE</span>
               <span>COURS</span>
               <span>STATUT</span>
-              <span>DATE</span>
-              <span>TAILLE</span>
+              <span>DATE / TAILLE</span>
               <span />
             </div>
-            {documents.map((doc) => (
-              <div className="document-row" key={doc.id}>
-                <div className="document-name">
-                  <div className={`file-icon ${doc.color}`}>
-                    <FileText size={18} />
+            {documents.map((doc) => {
+              const courseName =
+                doc.courseId !== undefined
+                  ? courseById.get(doc.courseId) ?? "Cours inconnu"
+                  : "—";
+              return (
+                <div className="document-row" key={doc.id}>
+                  <div className="document-name">
+                    <div className={`file-icon ${doc.color}`}>
+                      <FileText size={18} />
+                    </div>
+
+                    <strong>{doc.name}</strong>
                   </div>
 
-                  <strong>{doc.name}</strong>
-                </div>
-
-                <span className="document-course">{doc.mime_type}</span>
-                <span className="document-course">{doc.course}</span>
-                <span
-                  className={`document-status ${
-                    doc.status === "approved"
-                      ? "approved"
+                  <span className="document-course">
+                    {typeLabelFromMimeType(doc.mime_type)}
+                  </span>
+                  <span className="document-course">{courseName}</span>
+                  <span
+                    className={`document-status ${
+                      doc.status === "approved"
+                        ? "approved"
+                        : doc.status === "rejected"
+                          ? "rejected"
+                          : "pending"
+                    }`}
+                  >
+                    {doc.status === "approved"
+                      ? "Validé"
                       : doc.status === "rejected"
-                        ? "rejected"
-                        : "pending"
-                  }`}
-                >
-                  {doc.status === "approved"
-                    ? "Validé"
-                    : doc.status === "rejected"
-                      ? "Refusé"
-                      : "En attente"}
-                </span>
-                <span className="document-date">{doc.date}</span>
-                <span className="document-size">{doc.size}</span>
+                        ? "Refusé"
+                        : "En attente"}
+                  </span>
+                  <span className="document-date">
+                    {formatDateFR(doc.date)} · {doc.size}
+                  </span>
 
-                <button
-                  className="download-button"
-                  onClick={() => handleDownload(doc)}
-                  title="Télécharger"
-                >
-                  <span>↓</span>
-                </button>
-              </div>
-            ))}
+                  <button
+                    className="download-button"
+                    onClick={() => handleDownload(doc)}
+                    title="Télécharger"
+                  >
+                    <span>↓</span>
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </section>
       )}
