@@ -1,4 +1,4 @@
-import { ArrowRight, FileText } from "lucide-react";
+import { ArrowRight, FileText, Play, BookOpen } from "lucide-react";
 import { useState } from "react";
 import {
   getDocumentSignedUrl,
@@ -265,6 +265,15 @@ export function CoursesPage({
                         validatedDocsForCourse(course) > 1 ? "s" : ""
                       }
                     </span>
+                  </div>
+
+                  <div className="progress-track">
+                    <div
+                      className={`progress-fill ${
+                        course.color === "blue" ? "blue" : course.color === "orange" ? "orange" : "purple"
+                      }`}
+                      style={{ width: `${Math.min(100, Math.max(0, course.progress ?? 0))}%` }}
+                    />
                   </div>
 
                   <span className="text-button">

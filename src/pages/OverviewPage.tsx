@@ -11,6 +11,7 @@ import {
   MoreHorizontal,
   ShieldCheck,
   Sparkles,
+  Play,
 } from "lucide-react";
 import { useState } from "react";
 import { getDocumentSignedUrl } from "../lib/supabase";
@@ -242,6 +243,15 @@ export function OverviewPage({
                     <div className="course-meta">
                       <span>{(course.planned_hours ?? 0)}h</span>
                     </div>
+                  </div>
+
+                  <div className="progress-track">
+                    <div
+                      className={`progress-fill ${
+                        course.color === "blue" ? "blue" : course.color === "orange" ? "orange" : "purple"
+                      }`}
+                      style={{ width: `${Math.min(100, Math.max(0, course.progress ?? 0))}%` }}
+                    />
                   </div>
 
                   <ChevronRight size={17} className="muted-icon" />
