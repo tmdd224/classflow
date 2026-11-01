@@ -1,0 +1,21 @@
+equipe_id,nom,ville,region,annee_creation,stade,capacite_stade,budget_millions_fcfa
+E01,Étoile du Cap-Vert,Dakar,Dakar,1962,Stade du Cap,18000,950
+E02,Baobab Sporting,Thiès,Thiès,1971,Stade des Baobabs,12000,620
+E03,Fleuve Athletic,Saint-Louis,Saint-Louis,1958,Stade du Fleuve,9000,540
+E04,Palmiers FC,Ziguinchor,Ziguinchor,1980,Stade des Palmiers,10000,480
+E05,Saloum United,Kaolack,Kaolack,1975,Stade du Saloum,8000,410
+E06,Océan Club,Mbour,Thiès,1994,Stade de la Petite-Côte,7000,430
+E07,Sahel Olympique,Louga,Louga,1988,Stade du Sahel,6000,300
+E08,Savane FC,Tambacounda,Tambacounda,1999,Stade de la Savane,5000,260
+E09,Presqu'île Racing,Dakar,Dakar,2005,Stade de la Corniche,11000,780
+E10,Niayes Académie,Rufisque,Dakar,2010,Stade des Niayes,4000,350
+E11,Lagune Sportive,Joal,Thiès,1997,Stade de la Lagune,4500,240
+E12,Falaise AC,Kédougou,Kédougou,2003,Stade des Falaises,3500,220
+E13,Sine Racing,Fatick,Fatick,1984,Stade du Sine,5000,280
+E14,Ferlo United,Matam,Matam,2001,Stade du Ferlo,4000,230
+E15,Delta Club,Podor,Saint-Louis,1992,Stade du Delta,3000,200
+E16,Forêt FC,Kolda,Kolda,1986,Stade de la Forêt,6000,310
+E17,Diourbel Sporting,Diourbel,Diourbel,1978,Stade du Centre,7000,360
+E18,Kaffrine Athletic,Kaffrine,Kaffrine,2008,Stade de Kaffrine,4000,250
+E19,Sédhiou Olympique,Sédhiou,Sédhiou,1990,Stade du Fleuve Casamance,3500,210
+E20,Banlieue Espoir,Pikine,Dakar,2012,Stade de la Banlieue,8000,520

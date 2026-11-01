@@ -1,0 +1,115 @@
+decision	module	chemin	titre	raison	mo
+inclure	S1-ARCHI	Architecture -Tech/Chap3-architecture_des_applications client serveur micro services.pdf	Chap3-architecture des applications client serveur micro services	support de cours / sujet de TP / données du cours	3.81
+inclure	S1-ARCHI	Architecture -Tech/Chap4_client_serveur.pdf	Chap4 client serveur	support de cours / sujet de TP / données du cours	4.74
+inclure	S1-ARCHI	Architecture -Tech/Chap5-Bases_de_donnees_et_Reseaux.pdf	Chap5-Bases de donnees et Reseaux	support de cours / sujet de TP / données du cours	5.72
+inclure	S1-ARCHI	Architecture -Tech/Chapitre_1_Architecture_Technique_Systemes_Informatiques.pdf	Chapitre 1 Architecture Technique Systemes Informatiques	support de cours / sujet de TP / données du cours	5.82
+inclure	S1-ARCHI	Architecture -Tech/CHAPITRE_2_Systemes_InformatiquesPDF.pdf	CHAPITRE 2 Systemes InformatiquesPDF	support de cours / sujet de TP / données du cours	3.53
+inclure	S1-ARCHI	Architecture -Tech/PPT2_Systemes_distribues_et_Cloud(1).pdf	PPT2 Systemes distribues et Cloud(1)	support de cours / sujet de TP / données du cours	6.76
+inclure	S1-BIGDATA	Big_Data/Copie de Cours_Hadoop_MapReduce.pdf	Copie de Cours Hadoop MapReduce	support de cours / sujet de TP / données du cours	2.33
+inclure	S1-BIGDATA	Big_Data/Cours 1 Intro Big Data.pdf	Cours 1 Intro Big Data	support de cours / sujet de TP / données du cours	1.97
+inclure	S1-BIGDATA	Big_Data/Cours_Hadoop_HDFS.pdf	Cours Hadoop HDFS	support de cours / sujet de TP / données du cours	2.38
+inclure	S1-BIGDATA	Big_Data/Prerequis_Installation_TP_BigData.pdf	Prerequis Installation TP BigData	support de cours / sujet de TP / données du cours	0.26
+inclure	S1-BIGDATA	Big_Data/TP2 HDFS.pdf	TP2 HDFS	support de cours / sujet de TP / données du cours	0.08
+inclure	S1-BIGDATA	Big_Data/TP_Guide_HDFS.pdf	TP Guide HDFS	support de cours / sujet de TP / données du cours	0.29
+inclure	S1-EQUIPES	Management des Equipes/COURS MANAGEMENT D_EQUIPE-KITOYI.pdf	COURS MANAGEMENT D EQUIPE-KITOYI	support de cours / sujet de TP / données du cours	2.65
+inclure	S1-MGP	Management_projet/Gestion de Projet Informatique - Méthode Agile.pdf	Gestion de Projet Informatique - Méthode Agile	support de cours / sujet de TP / données du cours	6.07
+inclure	S1-MGP	Management_projet/Manifeste Agile.pdf	Manifeste Agile	support de cours / sujet de TP / données du cours	1.44
+inclure	S1-MGP	Management_projet/Présentation du Projet Agile.pdf	Présentation du Projet Agile	support de cours / sujet de TP / données du cours	3.7
+inclure	S1-MGP	Management_projet/Séance 1.pdf	Séance 1	support de cours / sujet de TP / données du cours	2.32
+inclure	S1-MGP	Management_projet/Séance 2.pdf	Séance 2	support de cours / sujet de TP / données du cours	2.81
+inclure	S1-PYTHON	Cours_Python/Python — Séance 5 Deep learning et vision avec PyTorch et OpenCV.pptx	Python — Séance 5 Deep learning et vision avec PyTorch et OpenCV	support de cours / sujet de TP / données du cours	2.25
+inclure	S1-PYTHON	Cours_Python/pythonavance_docs_data/data/meteo_dakar_2025.csv	meteo dakar 2025	support de cours / sujet de TP / données du cours	0.01
+inclure	S1-PYTHON	Cours_Python/pythonavance_docs_data/docs/Cours_Python_Avance_L3_IA.pdf	Cours Python Avance L3 IA	support de cours / sujet de TP / données du cours	0.16
+inclure	S1-PYTHON	Cours_Python/pythonavance_docs_data/docs/Seance1_Ecosysteme_Python_NumPy.pptx	Seance1 Ecosysteme Python NumPy	support de cours / sujet de TP / données du cours	0.09
+inclure	S1-PYTHON	Cours_Python/pythonavance_docs_data/docs/TP1_Statistiques_meteo_NumPy.docx	TP1 Statistiques meteo NumPy	support de cours / sujet de TP / données du cours	0.02
+inclure	S1-PYTHON	Cours_Python/SEANCE2-TP2/TP2/Python ÔÇö Se╠üance 2 Analyse de donne╠ües avec Pandas.pptx	Python — Séance 2 Analyse de données avec Pandas	support de cours / sujet de TP / données du cours	0.16
+inclure	S1-PYTHON	Cours_Python/SEANCE2-TP2/TP2/TP2 ÔÇö Analyse d_un championnat de football avec Pandas.pdf	TP2 — Analyse d un championnat de football avec Pandas	support de cours / sujet de TP / données du cours	0.31
+inclure	S1-PYTHON	Cours_Python/SEANCE2-TP2/TP2/tp2_football_data/data/buts.csv	buts	support de cours / sujet de TP / données du cours	0.12
+inclure	S1-PYTHON	Cours_Python/SEANCE2-TP2/TP2/tp2_football_data/data/equipes.csv	equipes	support de cours / sujet de TP / données du cours	0.0
+inclure	S1-PYTHON	Cours_Python/SEANCE2-TP2/TP2/tp2_football_data/data/joueurs.csv	joueurs	support de cours / sujet de TP / données du cours	0.14
+inclure	S1-PYTHON	Cours_Python/SEANCE2-TP2/TP2/tp2_football_data/data/matchs.csv	matchs	support de cours / sujet de TP / données du cours	0.07
+inclure	S1-SCRUM	Scrum Master/2020-Scrum-Guide-French.pdf	2020-Scrum-Guide-French	support de cours / sujet de TP / données du cours	0.31
+inclure	S1-SCRUM	Scrum Master/Seance10_Examen_Blanc_Methodologie.pdf	Seance10 Examen Blanc Methodologie	support de cours / sujet de TP / données du cours	1.15
+inclure	S1-SCRUM	Scrum Master/Seance10_Examen_Blanc_Methodologie.pptx	Seance10 Examen Blanc Methodologie	support de cours / sujet de TP / données du cours	0.19
+inclure	S1-SCRUM	Scrum Master/Seance1_Fondations_Agile_Empirisme2.pdf	Seance1 Fondations Agile Empirisme2	support de cours / sujet de TP / données du cours	1.13
+inclure	S1-SCRUM	Scrum Master/Seance2_Framework_Scrum_Vue_Ensemble.pdf	Seance2 Framework Scrum Vue Ensemble	support de cours / sujet de TP / données du cours	0.85
+inclure	S1-SCRUM	Scrum Master/Seance3_La_Scrum_Team.pdf	Seance3 La Scrum Team	support de cours / sujet de TP / données du cours	0.99
+inclure	S1-SCRUM	Scrum Master/Seance4_Sprint_Planning_Daily.pdf	Seance4 Sprint Planning Daily	support de cours / sujet de TP / données du cours	1.0
+inclure	S1-SCRUM	Scrum Master/Seance5_Review_Retrospective.pdf	Seance5 Review Retrospective	support de cours / sujet de TP / données du cours	1.01
+inclure	S1-SCRUM	Scrum Master/Seance6_Artefacts_Engagements.pptx	Seance6 Artefacts Engagements	support de cours / sujet de TP / données du cours	0.21
+inclure	S1-SCRUM	Scrum Master/Seance7_Estimation_Priorisation.pdf	Seance7 Estimation Priorisation	support de cours / sujet de TP / données du cours	0.99
+inclure	S1-SCRUM	Scrum Master/Seance8_Scrum_Applique_IA_Cyber.pdf	Seance8 Scrum Applique IA Cyber	support de cours / sujet de TP / données du cours	1.11
+inclure	S1-SCRUM	Scrum Master/Sujet_Travail_Groupe_Scrum2.pdf	Sujet Travail Groupe Scrum2	support de cours / sujet de TP / données du cours	0.02
+inclure	S1-SCRUM	Scrum Master/Synthese_memothetique_Scrum_2020.pdf	Synthese memothetique Scrum 2020	support de cours / sujet de TP / données du cours	0.03
+verifier	S1-ARCHI	Architecture -Tech/10 PROJETS 10 GROUPES.docx	10 PROJETS 10 GROUPES	liste de projets (sujet ?) à confirmer	0.2
+verifier	S1-ARCHI	Architecture -Tech/exo-Modélisation.jpeg	exo-Modélisation	énoncé d'exercice ? à confirmer	0.21
+verifier	S1-ARCHI	Architecture -Tech/Medidoc_Adaptation_Clinique_Style_Support_V2.pdf	Medidoc Adaptation Clinique Style Support V2	origine inconnue	0.05
+verifier	S1-ARCHI	Architecture -Tech/Mini_TP2_Architecture_des_Applications_Groupe_ISM FIN COURS 1.docx	Mini TP2 Architecture des Applications Groupe ISM FIN COURS 1	sujet ou rendu de groupe ?	0.14
+verifier	S1-ARCHI	Architecture -Tech/TP-1.docx	TP-1	sujet de TP ou rendu ? à confirmer	0.16
+verifier	S1-ARCHI	Architecture -Tech/TP_Synthese_Architecture_Generale_ISM.docx	TP Synthese Architecture Generale ISM	sujet ou rendu ? à confirmer	0.05
+verifier	S1-BIGDATA	Big_Data/récapitulatif HDFS.png	récapitulatif HDFS	image de synthèse, auteur à confirmer	2.16
+verifier	S1-MGP	Management_projet/3Etude_de_Cas_Billetterie_JOJ_Dakar_2026.docx	3Etude de Cas Billetterie JOJ Dakar 2026	plusieurs versions du cas d'étude : garder la bonne	2.3
+verifier	S1-MGP	Management_projet/3Etude_de_Cas_Billetterie_JOJ_Dakar_2026_Complete.docx	3Etude de Cas Billetterie JOJ Dakar 2026 Complete	plusieurs versions du cas d'étude : garder la bonne	2.3
+verifier	S1-MGP	Management_projet/Calcul chiffrage.xlsx	Calcul chiffrage	tableur de travail, à confirmer	0.01
+verifier	S1-MGP	Management_projet/ChatGPT Image 22 sept. 2026, 11_11_57.png	ChatGPT Image 22 sept. 2026, 11 11 57	infographie (générée ?) : droits à confirmer	2.22
+verifier	S1-MGP	Management_projet/Devoir manegemnet de projet.zip	Devoir manegemnet de projet	devoir (rendu ?) à confirmer	1.09
+verifier	S1-MGP	Management_projet/Etude2_de_Cas_Billetterie_JOJ_Dakar_2026_Niveau_Licence_Final.docx	Etude2 de Cas Billetterie JOJ Dakar 2026 Niveau Licence Final	plusieurs versions du cas d'étude : garder la bonne	0.04
+verifier	S1-MGP	Management_projet/Etude2_de_Cas_Billetterie_JOJ_Dakar_2026§.docx	Etude2 de Cas Billetterie JOJ Dakar 2026§	plusieurs versions du cas d'étude : garder la bonne	2.3
+verifier	S1-MGP	Management_projet/Etude_de_Cas_Billetterie_JOJ_Dakar_2026_Complete.pdf	Etude de Cas Billetterie JOJ Dakar 2026 Complete	plusieurs versions du cas d'étude : garder la bonne	0.17
+verifier	S1-MGP	Management_projet/Etude_de_Cas_Billetterie_JOJ_Dakar_2026_Niveau_Licence.docx	Etude de Cas Billetterie JOJ Dakar 2026 Niveau Licence	plusieurs versions du cas d'étude : garder la bonne	0.04
+verifier	S1-MGP	Management_projet/Etude_de_Cas_Billetterie_JOJ_Dakar_2026§.pdf	Etude de Cas Billetterie JOJ Dakar 2026§	plusieurs versions du cas d'étude : garder la bonne	1.12
+verifier	S1-MGP	Management_projet/Guide visuel du Manifeste Agile.png	Guide visuel du Manifeste Agile	infographie (générée ?) : droits à confirmer	2.44
+verifier	S1-MGP	Management_projet/Infographie colorée du Manifeste Agile.png	Infographie colorée du Manifeste Agile	infographie (générée ?) : droits à confirmer	2.12
+verifier	S1-MGP	Management_projet/Infographie récapitulative du management de projet.png	Infographie récapitulative du management de projet	infographie (générée ?) : droits à confirmer	2.13
+verifier	S1-MGP	Management_projet/Liste des tâches.docx	Liste des tâches	document de travail, à confirmer	0.01
+verifier	S1-MGP	Management_projet/Vue d’ensemble du projet JOJ Dakar 2026.png	Vue d’ensemble du projet JOJ Dakar 2026	infographie (générée ?) : droits à confirmer	2.22
+verifier	S1-PYTHON	Cours_Python/TP4.zip	TP4	archive du TP4, à confirmer	7.39
+verifier	S1-SCRUM	Scrum Master/image estimation vélocité.png	image estimation vélocité	image de séance, à confirmer	1.32
+exclure	S1-ARCHI	Architecture -Tech/Aichatou_KA_L3_IA_Projet_Synthèse.docx	Aichatou KA L3 IA Projet Synthèse	travail d'étudiant (rendu / projet de groupe)	5.27
+exclure	S1-ARCHI	Architecture -Tech/Aichatou_KA_L3_IA_Projet_Synthèse.pdf	Aichatou KA L3 IA Projet Synthèse	travail d'étudiant (rendu / projet de groupe)	1.7
+exclure	S1-ARCHI	Architecture -Tech/Aichatou_KA_L3_IA_Projet_Synthèse_CORRIGE_FINAL.docx	Aichatou KA L3 IA Projet Synthèse CORRIGE FINAL	travail d'étudiant (rendu / projet de groupe)	7.2
+exclure	S1-ARCHI	Architecture -Tech/Démo-voix-off.ogg	Démo-voix-off	audio sans lien clair avec un cours	0.03
+exclure	S1-ARCHI	Architecture -Tech/Etude_de_cas_Projet1_Aichatou_KA et Fatima_Zahra_DIOP.docx	Etude de cas Projet1 Aichatou KA et Fatima Zahra DIOP	travail d'étudiant (rendu / projet de groupe)	0.85
+exclure	S1-ARCHI	Architecture -Tech/Etude_de_cas_Projet1_Aichatou_KA et Fatima_Zahra_DIOP.pdf	Etude de cas Projet1 Aichatou KA et Fatima Zahra DIOP	travail d'étudiant (rendu / projet de groupe)	0.78
+exclure	S1-ARCHI	Architecture -Tech/GROUPE ISM.docx	GROUPE ISM	travail d'étudiant (rendu / projet de groupe)	0.4
+exclure	S1-ARCHI	Architecture -Tech/Livrable_Final_Architecture_Technique_ISM.docx	Livrable Final Architecture Technique ISM	travail d'étudiant (rendu / projet de groupe)	1.84
+exclure	S1-ARCHI	Architecture -Tech/Projet1_Aichatou_KA&Fatima_Zahra_Diop.docx	Projet1 Aichatou KA&Fatima Zahra Diop	travail d'étudiant (rendu / projet de groupe)	0.55
+exclure	S1-ARCHI	Architecture -Tech/TP2.docx	TP2	travail d'étudiant (rendu / projet de groupe)	5.68
+exclure	S1-ARCHI	Architecture -Tech/TP2_Aichatou_ka_L3_IA.docx	TP2 Aichatou ka L3 IA	travail d'étudiant (rendu / projet de groupe)	5.68
+exclure	S1-ARCHI	Architecture -Tech/TP2_Aichatou_ka_L3_IA.pdf	TP2 Aichatou ka L3 IA	travail d'étudiant (rendu / projet de groupe)	0.99
+exclure	S1-ARCHI	Architecture -Tech/TP_Chapitre_1_Architecture_Technique_Rendu_final.docx	TP Chapitre 1 Architecture Technique Rendu final	travail d'étudiant (rendu / projet de groupe)	0.21
+exclure	S1-ARCHI	Architecture -Tech/~$ PROJETS 10 GROUPES.docx	~$ PROJETS 10 GROUPES	fichier système ou temporaire	0.0
+exclure	S1-ARCHI	Architecture -Tech/~$chatou_KA_L3_IA_Projet_Synthèse.docx	~$chatou KA L3 IA Projet Synthèse	fichier système ou temporaire	0.0
+exclure	S1-ARCHI	Architecture -Tech/~$OUPE ISM.docx	~$OUPE ISM	fichier système ou temporaire	0.0
+exclure	S1-BIGDATA	Big_Data/TP1_Aichatou_KA.docx	TP1 Aichatou KA	travail d'étudiant (rendu / projet de groupe)	0.01
+exclure	S1-PYTHON	Cours_Python/__MACOSX/._pythonavance_docs_data	. pythonavance docs data	fichier système ou temporaire	0.0
+exclure	S1-PYTHON	Cours_Python/__MACOSX/pythonavance_docs_data/._data	. data	fichier système ou temporaire	0.0
+exclure	S1-PYTHON	Cours_Python/__MACOSX/pythonavance_docs_data/._docs	. docs	fichier système ou temporaire	0.0
+exclure	S1-PYTHON	Cours_Python/__MACOSX/pythonavance_docs_data/data/._meteo_dakar_2025.csv	. meteo dakar 2025	fichier système ou temporaire	0.0
+exclure	S1-PYTHON	Cours_Python/__MACOSX/pythonavance_docs_data/docs/._Cours_Python_Avance_L3_IA.pdf	. Cours Python Avance L3 IA	fichier système ou temporaire	0.0
+exclure	S1-PYTHON	Cours_Python/__MACOSX/pythonavance_docs_data/docs/._Seance1_Ecosysteme_Python_NumPy.pptx	. Seance1 Ecosysteme Python NumPy	fichier système ou temporaire	0.0
+exclure	S1-PYTHON	Cours_Python/__MACOSX/pythonavance_docs_data/docs/._TP1_Statistiques_meteo_NumPy.docx	. TP1 Statistiques meteo NumPy	fichier système ou temporaire	0.0
+exclure	S1-PYTHON	Cours_Python/Rendu_Tp1/Copie de TP1-AichatouKA.ipynb	Copie de TP1-AichatouKA	rendu d'un étudiant (travail personnel)	0.04
+exclure	S1-PYTHON	Cours_Python/Rendu_Tp1/requirements_Seynabou_Sall.txt	requirements Seynabou Sall	rendu d'un étudiant (travail personnel)	0.01
+exclure	S1-PYTHON	Cours_Python/Rendu_Tp1/TP1-AichatouKA.ipynb	TP1-AichatouKA	rendu d'un étudiant (travail personnel)	0.04
+exclure	S1-PYTHON	Cours_Python/Rendu_Tp1/TP1-Statistique-carine ADAISSO.docx	TP1-Statistique-carine ADAISSO	rendu d'un étudiant (travail personnel)	0.1
+exclure	S1-PYTHON	Cours_Python/Rendu_Tp1/TP1_BOUMBEYA_BIANIEF_Georgi_Nahum.ipynb	TP1 BOUMBEYA BIANIEF Georgi Nahum	rendu d'un étudiant (travail personnel)	0.2
+exclure	S1-PYTHON	Cours_Python/Rendu_Tp1/TP1_Ibrahima_Khalil_Ndiaye.ipynb	TP1 Ibrahima Khalil Ndiaye	rendu d'un étudiant (travail personnel)	0.8
+exclure	S1-PYTHON	Cours_Python/Rendu_Tp1/TP1_Idriss_Kader_BAKAYOKO.ipynb	TP1 Idriss Kader BAKAYOKO	rendu d'un étudiant (travail personnel)	0.01
+exclure	S1-PYTHON	Cours_Python/Rendu_Tp1/TP1_meteo_de_Adéwalé_Samba_Wadjid_ALI.ipynb	TP1 meteo de Adéwalé Samba Wadjid ALI	rendu d'un étudiant (travail personnel)	0.18
+exclure	S1-PYTHON	Cours_Python/Rendu_Tp1/TP1_notebook_Mariza_Rebienot.ipynb	TP1 notebook Mariza Rebienot	rendu d'un étudiant (travail personnel)	0.3
+exclure	S1-PYTHON	Cours_Python/Rendu_Tp1/TP1_PAPA_ARONA_SENE.docx	TP1 PAPA ARONA SENE	rendu d'un étudiant (travail personnel)	0.18
+exclure	S1-PYTHON	Cours_Python/Rendu_Tp1/TP1_Seynabou_SALL.ipynb	TP1 Seynabou SALL	rendu d'un étudiant (travail personnel)	0.21
+exclure	S1-PYTHON	Cours_Python/Rendu_Tp1/Tp1_statistique_fatouKIne)/requirements.txt	requirements	rendu d'un étudiant (travail personnel)	0.01
+exclure	S1-PYTHON	Cours_Python/Rendu_Tp1/Tp1_statistique_fatouKIne)/TP1_Fatou_kine.ipynb	TP1 Fatou kine	rendu d'un étudiant (travail personnel)	0.23
+exclure	S1-PYTHON	Cours_Python/Rendu_Tp1/TP1_Statistique_sur_des_données_météo_de Thierno_Mamadou_Dian_Diallo.ipynb	TP1 Statistique sur des données météo de Thierno Mamadou Dian Diallo	rendu d'un étudiant (travail personnel)	0.25
+exclure	S1-PYTHON	Cours_Python/Rendu_Tp1/TP1_Statistiques_meteo_NumPy de Hamze Abdoulkarim Aden.docx	TP1 Statistiques meteo NumPy de Hamze Abdoulkarim Aden	rendu d'un étudiant (travail personnel)	0.01
+exclure	S1-PYTHON	Cours_Python/Rendu_Tp1/TP1_Statistiques_sur_des_données_météo_Fatima_Zahra_DIOP.ipynb	TP1 Statistiques sur des données météo Fatima Zahra DIOP	rendu d'un étudiant (travail personnel)	0.09
+exclure	S1-PYTHON	Cours_Python/SEANCE2-TP2.zip	SEANCE2-TP2	doublon du dossier déjà présent	0.42
+exclure	S1-PYTHON	Cours_Python/SEANCE2-TP2/__MACOSX/TP2/._.DS_Store	.	fichier système ou temporaire	0.0
+exclure	S1-PYTHON	Cours_Python/SEANCE2-TP2/__MACOSX/TP2/._Python ÔÇö Se╠üance 2 Analyse de donne╠ües avec Pandas.pptx	. Python — Séance 2 Analyse de données avec Pandas	fichier système ou temporaire	0.0
+exclure	S1-PYTHON	Cours_Python/SEANCE2-TP2/__MACOSX/TP2/._TP2 ÔÇö Analyse d_un championnat de football avec Pandas.pdf	. TP2 — Analyse d un championnat de football avec Pandas	fichier système ou temporaire	0.0
+exclure	S1-PYTHON	Cours_Python/SEANCE2-TP2/__MACOSX/TP2/._tp2_football_data.zip	. tp2 football data	fichier système ou temporaire	0.0
+exclure	S1-PYTHON	Cours_Python/SEANCE2-TP2/TP2/.DS_Store	.DS Store	fichier système ou temporaire	0.01
+exclure	S1-PYTHON	Cours_Python/SEANCE2-TP2/TP2/tp2_football_data.zip	tp2 football data	doublon du dossier déjà présent	0.08
+exclure	S1-SCRUM	Scrum Master/Fil rouge Module Scrum Master - Aichatou KA & Fatima Zahra DIOP.pdf	Fil rouge Module Scrum Master - Aichatou KA & Fatima Zahra DIOP	travail d'étudiant (rendu / projet de groupe)	0.45

@@ -7,37 +7,8 @@ import {
   Lock,
   Mail,
   Shield,
-  User,
 } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
-
-type RoleCard = {
-  label: string;
-  email: string;
-  icon: React.ComponentType<{ size?: number; strokeWidth?: number }>;
-  color: string;
-};
-
-const ROLE_CARDS: RoleCard[] = [
-  {
-    label: "Étudiant",
-    email: "etudiant@classflow.fr",
-    icon: GraduationCap,
-    color: "#7c3aed",
-  },
-  {
-    label: "Responsable",
-    email: "responsable@classflow.fr",
-    icon: Shield,
-    color: "#2563eb",
-  },
-  {
-    label: "Administrateur",
-    email: "admin@classflow.fr",
-    icon: User,
-    color: "#0f172a",
-  },
-];
 
 export function LoginPage() {
   const { signIn } = useAuth();
@@ -150,26 +121,6 @@ export function LoginPage() {
               {submitting ? "Connexion en cours…" : "Se connecter"}
             </button>
           </form>
-
-          <div className="demo-section">
-            <div className="demo-label">ACCÈS DE DÉMONSTRATION</div>
-
-            <div className="role-cards">
-              {ROLE_CARDS.map((role) => (
-                <div key={role.label} className="role-card">
-                  <div className="role-card-icon">
-                    <role.icon size={20} strokeWidth={1.5} />
-                  </div>
-                  <div className="role-card-label">{role.label}</div>
-                  <div className="role-card-email">{role.email}</div>
-                </div>
-              ))}
-            </div>
-
-            <p className="demo-note">
-              Mot de passe démo : Classflow2026!
-            </p>
-          </div>
         </div>
       </div>
     </div>
