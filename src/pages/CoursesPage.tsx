@@ -67,7 +67,8 @@ export function CoursesPage({
       (doc) =>
         doc.uploaded_by === userId &&
         doc.status === "approved" &&
-        (doc.courseId === course.code || doc.course === course.name)
+        doc.courseId !== undefined &&
+        courseNameFor(doc) === course.name
     ).length;
 
   const coursesBySemester = courses.reduce(
@@ -86,7 +87,8 @@ export function CoursesPage({
     const courseDeposits = documents.filter(
       (doc) =>
         doc.uploaded_by === userId &&
-        (doc.courseId === selected.code || doc.course === selected.name)
+        doc.courseId !== undefined &&
+        courseNameFor(doc) === selected.name
     );
 
     return (

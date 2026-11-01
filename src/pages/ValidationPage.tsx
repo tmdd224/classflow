@@ -60,6 +60,11 @@ export function ValidationPage({
     failures: Array<{ id: string; error: string }>;
   } | null>(null);
 
+  // Reouverture individuelle
+  const [reopenDocId, setReopenDocId] = useState<string | null>(null);
+  const [reopenReason, setReopenReason] = useState("");
+  const [reopenConfirmOpen, setReopenConfirmOpen] = useState(false);
+
   // Historique des événements
   const [eventsByDoc, setEventsByDoc] = useState<Record<string, any[]>>({});
   const [eventsLoading, setEventsLoading] = useState<Record<string, boolean>>(
@@ -118,6 +123,20 @@ export function ValidationPage({
   const isPending = (doc: DocumentItem) =>
     !doc.status || doc.status === "pending";
   const isSelected = (docId: string) => selectedIds.has(docId);
+  const isReopening = (docId: string) => reopenDocId === docId;
+
+  const setError = (message: string, code?: string, original?: string) => {
+    const parts = [message];
+    if (code) parts.push(`code: ${code}`);
+    if (original) parts.push(`| ${original}`);
+    setActionError(parts.join(" "));
+    console.error("Erreur de validation:", { message, code, original });
+  };
+
+  const clearError = () => {
+    setActionError(null);
+    setActionSuccess(null);
+  };
 
   const handleDownload = useCallback(
     async (doc: DocumentItem) => {
@@ -166,16 +185,14 @@ export function ValidationPage({
     setBatchMode(mode);
     setBatchReason("");
     setBatchConfirmOpen(true);
-    setActionError(null);
-    setActionSuccess(null);
+    clearError();
   };
 
   const cancelBatch = () => {
     setBatchConfirmOpen(false);
     setBatchMode(null);
     setBatchReason("");
-    setActionError(null);
-    setActionSuccess(null);
+    clearError();
   };
 
   const processBatch = async () => {
@@ -204,9 +221,20 @@ export function ValidationPage({
               mode === "approve" ? "approved" : "rejected",
               mode === "reject" ? (reason || null) : null
             );
+            if (!result.ok) {
+              console.error(
+                `Erreur review_document (${doc.id}):`,
+                result.code,
+                result.message
+              );
+            }
             return { id: doc.id, ok: result.ok, error: result.error };
           } catch (err) {
-            return { id: doc.id, ok: false, error: translateDbError(err) };
+            console.error(
+              `Exception review_document (${doc.id}):`,
+              (err as Error).message
+            );
+            return { id: doc.id, ok: false, error: (err as Error).message };
           }
         })
       );
@@ -242,6 +270,56 @@ export function ValidationPage({
 
     // Recharger les données
     await onRefresh();
+  };
+
+  const startReopen = (docId: string) => {
+    setReopenDocId(docId);
+    setReopenReason("");
+    setReopenConfirmOpen(true);
+    clearError();
+  };
+
+  const cancelReopen = () => {
+    setReopenConfirmOpen(false);
+    setReopenDocId(null);
+    setReopenReason("");
+    clearError();
+  };
+
+  const confirmReopen = async () => {
+    if (!reopenReason.trim()) {
+      setError("Un motif est obligatoire pour rouvrir la décision.");
+      return;
+    }
+    if (!reopenDocId) return;
+
+    setReopenConfirmOpen(false);
+    try {
+      const result = await reviewDocument(
+        reopenDocId,
+        "pending",
+        reopenReason.trim()
+      );
+      if (result.ok) {
+        setActionSuccess("Document rouvert avec succès.");
+        setReopenDocId(null);
+        setReopenReason("");
+        await onRefresh();
+      } else {
+        setError(result.error, result.code, result.message);
+        setReopenConfirmOpen(true);
+      }
+    } catch (err) {
+      const msg = (err as Error).message;
+      console.error("Exception review_document (reopen):", msg);
+      setError(msg);
+      setReopenConfirmOpen(true);
+    } finally {
+      if (reopenDocId) {
+        setReopenDocId(null);
+        setReopenReason("");
+      }
+    }
   };
 
   const handleFetchEvents = useCallback(
@@ -402,6 +480,51 @@ export function ValidationPage({
                 className="primary-button"
                 onClick={processBatch}
                 disabled={batchMode === "reject" && !batchReason.trim()}
+              >
+                Confirmer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de réouverture individuelle */}
+      {reopenConfirmOpen && reopenDocId && (
+        <div className="batch-modal-overlay" onClick={cancelReopen}>
+          <div className="batch-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="batch-modal-header">
+              <h3>Rouvrir la décision</h3>
+              <p>
+                Ce document sera repassé en attente de validation.
+              </p>
+            </div>
+            <div className="batch-modal-body">
+              <label>Motif de la réouverture (obligatoire) :</label>
+              <textarea
+                value={reopenReason}
+                onChange={(e) => setReopenReason(e.target.value)}
+                rows={3}
+                placeholder="Motif de la réouverture"
+              />
+              {!reopenReason.trim() && (
+                <span className="batch-modal-error">
+                  Un motif est obligatoire pour rouvrir.
+                </span>
+              )}
+            </div>
+            <div className="batch-modal-footer">
+              <button
+                type="button"
+                className="text-button"
+                onClick={cancelReopen}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                className="primary-button"
+                onClick={confirmReopen}
+                disabled={!reopenReason.trim()}
               >
                 Confirmer
               </button>
@@ -628,6 +751,45 @@ export function ValidationPage({
                         ) : null}
                       </>
                     ) : null}
+
+                    {canValidate && !docIsPending && !batchProcessing && !batchResult && !isReopening(doc.id) ? (
+                      <button
+                        type="button"
+                        className="text-button"
+                        onClick={() => startReopen(doc.id)}
+                        disabled={batchProcessing || batchResult !== null}
+                      >
+                        Rouvrir la décision
+                      </button>
+                    ) : null}
+
+                    {isReopening(doc.id) && (
+                      <div className="action-reason">
+                        <textarea
+                          value={reopenReason}
+                          onChange={(e) => setReopenReason(e.target.value)}
+                          placeholder="Motif de la réouverture (obligatoire)"
+                          rows={2}
+                        />
+                        <div className="upload-actions">
+                          <button
+                            type="button"
+                            className="text-button"
+                            onClick={cancelReopen}
+                          >
+                            Annuler
+                          </button>
+                          <button
+                            type="button"
+                            className="primary-button"
+                            onClick={confirmReopen}
+                            disabled={!reopenReason.trim()}
+                          >
+                            Confirmer
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                     <button
                       className="reset-filters"

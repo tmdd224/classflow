@@ -45,6 +45,7 @@ import type {
   Role,
 } from "./types";
 import { roleLabels } from "./types";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 function initials(source: string) {
   return source
@@ -337,8 +338,9 @@ function App() {
         </header>
 
         <div className="page-content">
-          {activePage === "overview" ? (
-            <OverviewPage
+          <ErrorBoundary>
+            {activePage === "overview" ? (
+              <OverviewPage
               courses={coursesData}
               documents={documentsData}
               query={query}
@@ -383,6 +385,7 @@ function App() {
             ) : (
               <ValidationPage
                 documents={documentsData}
+                courses={coursesData}
                 profiles={profilesData}
                 userId={user?.id ?? ""}
                 role={role}
@@ -403,6 +406,7 @@ function App() {
               documents={documentsData}
             />
           ) : null}
+          </ErrorBoundary>
         </div>
       </main>
     </div>

@@ -141,7 +141,6 @@ export function dbToDocumentItem(db: DocumentDB): DocumentItem {
     mime_type: db.mime_type,
     size_bytes: db.size_bytes,
     size: formatFileSize(db.size_bytes),
-    course: "",
     courseId: db.course_id ?? undefined,
     date: db.created_at,
     color,
@@ -189,11 +188,15 @@ export function buildCourseResources(
 ): Record<string, { name: string; type: string; date: string }[]> {
   const resources: Record<string, { name: string; type: string; date: string }[]> = {};
 
+  const courseById = new Map(courses.map((c) => [c.id, c.name]));
+
   for (const doc of documents) {
-    if (!resources[doc.course]) {
-      resources[doc.course] = [];
+    const courseName =
+      doc.courseId !== undefined ? courseById.get(doc.courseId) ?? "—" : "—";
+    if (!resources[courseName]) {
+      resources[courseName] = [];
     }
-    resources[doc.course].push({
+    resources[courseName].push({
       name: doc.name,
       type: doc.mime_type,
       date: doc.date,
@@ -494,15 +497,17 @@ export function translateDbError(error: unknown): string {
 }
 
 /**
- * Valide ou refuse un document via la fonction RPC `review_document`.
- * p_decision: 'approved' | 'rejected' | 'reopened'
+ * Valide, refuse ou rouvre un document via la fonction RPC `review_document`.
+ * p_decision: 'approved' | 'rejected' | 'pending'
  * p_comment: motif obligatoire pour un refus ou une réouverture.
  */
 export async function reviewDocument(
   documentId: string,
-  decision: "approved" | "rejected" | "reopened",
+  decision: "approved" | "rejected" | "pending",
   comment: string | null
-): Promise<{ ok: true } | { ok: false; error: string }> {
+): Promise<{
+  ok: true;
+} | { ok: false; error: string; code?: string; message?: string }> {
   const { error } = await supabase.rpc("review_document", {
     p_document_id: documentId,
     p_decision: decision,
@@ -510,7 +515,13 @@ export async function reviewDocument(
   });
 
   if (error) {
-    return { ok: false, error: translateDbError(error) };
+    console.error("Erreur review_document:", error);
+    return {
+      ok: false,
+      error: translateDbError(error),
+      code: (error as { code?: string }).code,
+      message: (error as { message?: string }).message,
+    };
   }
 
   return { ok: true };

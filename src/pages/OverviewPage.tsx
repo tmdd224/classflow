@@ -211,7 +211,9 @@ export function OverviewPage({
           <div className="course-list">
             {courses.map((course) => {
               const validatedDocs = documents.filter(
-                (doc) => doc.course === course.name
+                (doc) =>
+                  doc.courseId !== undefined &&
+                  courseById.get(doc.courseId) === course.name
               ).length;
 
               return (

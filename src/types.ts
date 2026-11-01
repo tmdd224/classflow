@@ -58,7 +58,6 @@ export type DocumentItem = {
   mime_type: string;
   size_bytes: number;
   size: string;
-  course: string;
   courseId: string | undefined;
   date: string;
   color: string;
