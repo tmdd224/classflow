@@ -4,21 +4,24 @@
 alter table public.classes enable row level security;
 
 -- Lecture des classes : tous les utilisateurs authentifiés peuvent lire
-create policy if not exists classes_select_authenticated
+drop policy if exists classes_select_authenticated on public.classes;
+create policy classes_select_authenticated
 on public.classes
 for select
 to authenticated
 using (true);
 
 -- Insertion des classes : tout utilisateur authentifié peut créer une classe
-create policy if not exists classes_insert_authenticated
+drop policy if exists classes_insert_authenticated on public.classes;
+create policy classes_insert_authenticated
 on public.classes
 for insert
 to authenticated
 with check (true);
 
 -- Mise à jour des classes : tout utilisateur authentifié peut mettre à jour (responsable, etc.)
-create policy if not exists classes_update_authenticated
+drop policy if exists classes_update_authenticated on public.classes;
+create policy classes_update_authenticated
 on public.classes
 for update
 to authenticated
