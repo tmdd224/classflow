@@ -152,7 +152,7 @@ export function AdminPage({
           icon={<FileText />}
           label="Documents au total"
           value={String(totalDocuments)}
-          note="DÃ©pÃ´ts et dÃ©monstration"
+          note="Dépôts et démonstration"
           tone="purple"
         />
 
@@ -160,23 +160,23 @@ export function AdminPage({
           icon={<Clock3 />}
           label="En attente"
           value={String(pending).padStart(2, "0")}
-          note="Ã€ examiner"
+          note="À examiner"
           tone="orange"
         />
 
         <StatCard
           icon={<ShieldCheck />}
-          label="ValidÃ©s"
+          label="Validés"
           value={String(approved).padStart(2, "0")}
-          note="ValidÃ©s"
+          note="Validés"
           tone="green"
         />
 
         <StatCard
           icon={<Clock3 />}
-          label="RefusÃ©s"
+          label="Refusés"
           value={String(rejected).padStart(2, "0")}
-          note="RefusÃ©s"
+          note="Refusés"
           tone="red"
         />
 
@@ -184,7 +184,7 @@ export function AdminPage({
           icon={<Users />}
           label="Utilisateurs"
           value={String(users.length)}
-          note={`${etudiants} Ã©tudiants Â· ${responsables} responsables`}
+          note={`${etudiants} étudiants · ${responsables} responsables`}
           tone="blue"
         />
       </section>
@@ -202,7 +202,7 @@ export function AdminPage({
           <div className="document-head">
             <span>NOM</span>
             <span>EMAIL</span>
-            <span>RÃ”LE</span>
+            <span>RÔLE</span>
             <span>CLASSE</span>
             <span>STATUT</span>
             <span />
@@ -213,7 +213,7 @@ export function AdminPage({
               <strong>{user.name}</strong>
               <span>{user.email}</span>
               <span>{roleLabels[user.role]}</span>
-              <span>{user.classe ?? "â€”"}</span>
+              <span>{user.classe ?? "—"}</span>
               <span className={`status-badge ${user.status === "actif" ? "status-active" : "status-inactive"}`}>
                 {user.status === "actif" ? "Actif" : "Inactif"}
               </span>
@@ -221,7 +221,7 @@ export function AdminPage({
                 className={`text-button ${saving[user.id] ? "saving" : ""}`}
                 onClick={() => handleToggleUser(user)}
                 disabled={saving[user.id]}
-                aria-label={user.status === "actif" ? "DÃ©sactiver le compte" : "Activer le compte"}
+                aria-label={user.status === "actif" ? "Désactiver le compte" : "Activer le compte"}
               >
                 {saving[user.id] ? (
                   <Save size={14} />
@@ -263,7 +263,7 @@ export function AdminPage({
                 onClick={handleCreateClass}
                 disabled={!newClassName.trim() || !newClassNiveau.trim()}
               >
-                CrÃ©er
+                Créer
               </button>
               <button className="text-button" onClick={() => setCreatingClass(false)}>
                 <XIcon size={14} /> Annuler
@@ -272,7 +272,7 @@ export function AdminPage({
           ) : (
             <div className="admin-actions">
               <button className="primary-button" onClick={() => setCreatingClass(true)}>
-                <Plus size={14} /> CrÃ©er une classe
+                <Plus size={14} /> Créer une classe
               </button>
             </div>
           )}
@@ -301,7 +301,7 @@ export function AdminPage({
                     onChange={(e) => setClassResponsable({ ...classResponsable, [classe.id]: e.target.value })}
                     disabled={isSaving}
                   >
-                    <option value="">â€” Aucun â€”</option>
+                    <option value="">— Aucun —</option>
                     {responsablesList.map((u) => (
                       <option key={u.id} value={u.id}>
                         {u.name} ({u.email})
@@ -330,7 +330,7 @@ export function AdminPage({
         <div className="section-heading">
           <div>
             <span className="section-kicker">COURS</span>
-            <h3>Cours et responsables affectÃ©s</h3>
+            <h3>Cours et responsables affectés</h3>
           </div>
           <div className="admin-actions" />
         </div>
@@ -358,7 +358,7 @@ export function AdminPage({
                     onChange={(e) => setCourseResponsable({ ...courseResponsable, [course.code]: e.target.value })}
                     disabled={isSaving}
                   >
-                    <option value="">â€” Aucun â€”</option>
+                    <option value="">— Aucun —</option>
                     {responsablesList.map((u) => (
                       <option key={u.id} value={u.id}>
                         {u.name} ({u.email})
