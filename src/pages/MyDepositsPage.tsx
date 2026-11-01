@@ -18,8 +18,10 @@ export function MyDepositsPage({
   profiles: User[];
   userId: string;
 }) {
+  const PAGE_SIZE = 8;
   const [filter, setFilter] = useState("Tous");
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   const courseById = new Map(courses.map((c) => [c.id, c.name]));
   const courseNameFor = (doc: DocumentItem) =>
@@ -58,6 +60,8 @@ export function MyDepositsPage({
 
     return true;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredDocuments.length / PAGE_SIZE));
 
   const handleDownload = useCallback(
     async (doc: DocumentItem) => {
@@ -150,77 +154,136 @@ export function MyDepositsPage({
               Vos documents deposes apparaitront ici pour suivi.
             </p>
           </div>
-        ) : (
+        ) : (<>
           <div className="validation-list">
-            {filteredDocuments.map((doc) => {
-              const author = profileById.get(doc.uploaded_by);
-              return (
-                <article className="validation-item" key={doc.id}>
-                  <div className="validation-document-header">
-                    <div className={`file-icon ${doc.color}`}>
-                      <FileText size={20} />
-                    </div>
+            {filteredDocuments
+              .slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+              .map((doc) => {
+                const author = profileById.get(doc.uploaded_by);
+                return (
+                  <article className="validation-item" key={doc.id}>
+                    <div className="validation-document-header">
+                      <div className={`file-icon ${doc.color}`}>
+                        <FileText size={20} />
+                      </div>
 
-                    <div className="validation-document-info">
-                      <strong>{doc.name}</strong>
+                      <div className="validation-document-info">
+                        <strong>{doc.name}</strong>
 
-                      <span>
-                        {typeLabelFromMimeType(doc.mime_type)} ·
-                        {courseNameFor(doc)} ·
-                        {formatDateFR(doc.date)} · {doc.size}
-                      </span>
-
-                      {author && (
-                        <span className="document-author">
-                          Par {author}
+                        <span>
+                          {typeLabelFromMimeType(doc.mime_type)} ·
+                          {courseNameFor(doc)} ·
+                          {formatDateFR(doc.date)} · {doc.size}
                         </span>
-                      )}
-                    </div>
 
-                    <span
-                      className={`validation-status ${
-                        doc.status === "approved"
-                          ? "approved"
+                        {author && (
+                          <span className="document-author">
+                            Par {author}
+                          </span>
+                        )}
+                      </div>
+
+                      <span
+                        className={`validation-status ${
+                          doc.status === "approved"
+                            ? "approved"
+                            : doc.status === "rejected"
+                              ? "rejected"
+                              : "pending"
+                        }`}
+                      >
+                        {doc.status === "approved"
+                          ? "Valide"
                           : doc.status === "rejected"
-                            ? "rejected"
-                            : "pending"
-                      }`}
-                    >
-                      {doc.status === "approved"
-                        ? "Valide"
-                        : doc.status === "rejected"
-                          ? "Refuse"
-                          : "En attente"}
-                    </span>
-                  </div>
-
-                  {doc.description && (
-                    <p className="validation-description">{doc.description}</p>
-                  )}
-
-                  {doc.status === "rejected" && (
-                    <div className="validation-comment">
-                      <strong>Motif du refus :</strong>
-                      <p>
-                        {doc.rejection_reason ||
-                          "Ce document a ete refuse par l'equipe pedagogique."}
-                      </p>
+                            ? "Refuse"
+                            : "En attente"}
+                      </span>
                     </div>
-                  )}
 
-                  <div className="validation-actions">
-                    <button
-                      className="download-button"
-                      onClick={() => handleDownload(doc)}
-                      title="Télécharger"
-                    >
-                      <Download size={16} strokeWidth={1.8} />
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
+                    {doc.description && (
+                      <p className="validation-description">{doc.description}</p>
+                    )}
+
+                    {doc.status === "rejected" && (
+                      <div className="validation-comment">
+                        <strong>Motif du refus :</strong>
+                        <p>
+                          {doc.rejection_reason ||
+                            "Ce document a ete refuse par l'equipe pedagogique."}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="validation-actions">
+                      <button
+                        className="download-button"
+                        onClick={() => handleDownload(doc)}
+                        title="Télécharger"
+                      >
+                        <Download size={16} strokeWidth={1.8} />
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
           </div>
+
+          {filteredDocuments.length > 0 && (
+            <div className="list-footer">
+              <span>
+                {Math.min(page * PAGE_SIZE, filteredDocuments.length)} sur{" "}
+                {filteredDocuments.length}
+              </span>
+              <div className="progress-track">
+                <div
+                  className="progress-fill"
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      Math.max(0,
+                        ((page - 1) * PAGE_SIZE +
+                          Math.min(
+                            PAGE_SIZE,
+                            filteredDocuments.length - (page - 1) * PAGE_SIZE
+                          )) /
+                            filteredDocuments.length) *
+                          100
+                    )}%`,
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <div className="pagination">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                aria-label="Page précédente"
+              >
+                ‹
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className={p === page ? "active" : ""}
+                  aria-label={`Page ${p}`}
+                >
+                  {p}
+                </button>
+              ))}
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                aria-label="Page suivante"
+              >
+                ›
+              </button>
+            </div>
+          )}
+        </>
         )}
       </section>
     </div>

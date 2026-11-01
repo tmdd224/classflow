@@ -20,7 +20,9 @@ export function CoursesPage({
   onSelectCourse: (code: string | null) => void;
   userId: string;
 }) {
+  const PAGE_SIZE = 8;
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   // Construire les ressources par cours à partir des documents de la base
   const courseResources: Record<string, { name: string; type: string; date: string; storage_path: string }[]> = {};
@@ -108,6 +110,8 @@ export function CoursesPage({
         doc.courseId === selected.id
     );
 
+    const totalPages = Math.max(1, Math.ceil(courseDeposits.length / PAGE_SIZE));
+
     return (
       <div className="courses-page">
         {downloadError && (
@@ -188,45 +192,105 @@ export function CoursesPage({
                 <span>DATE / TAILLE</span>
                 <span />
               </div>
-              {courseDeposits.map((doc) => (
-                <div className="document-row" key={doc.id}>
-                  <div className="document-name">
-                    <div className={`file-icon ${doc.color}`}>
-                      <FileText size={18} />
+              {courseDeposits
+                .slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+                .map((doc) => (
+                  <div className="document-row" key={doc.id}>
+                    <div className="document-name">
+                      <div className={`file-icon ${doc.color}`}>
+                        <FileText size={18} />
+                      </div>
+                      <strong>{doc.name}</strong>
                     </div>
-                    <strong>{doc.name}</strong>
-                  </div>
-                  <span className="document-course">
-                    <span
-                      className={`validation-status ${
-                        doc.status === "approved"
-                          ? "approved"
+                    <span className="document-course">
+                      <span
+                        className={`validation-status ${
+                          doc.status === "approved"
+                            ? "approved"
+                            : doc.status === "rejected"
+                              ? "rejected"
+                              : "pending"
+                        }`}
+                      >
+                        {doc.status === "approved"
+                          ? "Validé"
                           : doc.status === "rejected"
-                            ? "rejected"
-                            : "pending"
-                      }`}
-                    >
-                      {doc.status === "approved"
-                        ? "Validé"
-                        : doc.status === "rejected"
-                          ? "Refusé"
-                          : "En attente"}
+                            ? "Refusé"
+                            : "En attente"}
+                      </span>
                     </span>
-                  </span>
-                  <span className="document-date">
-                    {formatDateFR(doc.date)} · {doc.size}
-                  </span>
+                    <span className="document-date">
+                      {formatDateFR(doc.date)} · {doc.size}
+                    </span>
 
-                  <button
-                    className="download-button"
-                    onClick={() => handleDownload(doc)}
-                    title="Télécharger"
-                  >
-                    <Download size={16} strokeWidth={1.8} />
-                  </button>
-                </div>
-              ))}
+                    <button
+                      className="download-button"
+                      onClick={() => handleDownload(doc)}
+                      title="Télécharger"
+                    >
+                      <Download size={16} strokeWidth={1.8} />
+                    </button>
+                  </div>
+                ))}
             </div>
+
+            {courseDeposits.length > 0 && (
+              <div className="list-footer">
+                <span>
+                  {Math.min(page * PAGE_SIZE, courseDeposits.length)} sur{" "}
+                  {courseDeposits.length}
+                </span>
+                <div className="progress-track">
+                  <div
+                    className="progress-fill"
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        Math.max(0,
+                          ((page - 1) * PAGE_SIZE +
+                            Math.min(
+                              PAGE_SIZE,
+                              courseDeposits.length - (page - 1) * PAGE_SIZE
+                            )) /
+                            courseDeposits.length) *
+                          100
+                      )}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {totalPages > 1 && (
+              <div className="pagination">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  aria-label="Page précédente"
+                >
+                  ‹
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (p) => (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      className={p === page ? "active" : ""}
+                      aria-label={`Page ${p}`}
+                    >
+                      {p}
+                    </button>
+                  )
+                )}
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  aria-label="Page suivante"
+                >
+                  ›
+                </button>
+              </div>
+            )}
           </section>
         )}
       </div>

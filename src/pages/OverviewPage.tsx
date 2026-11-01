@@ -40,8 +40,10 @@ export function OverviewPage({
   currentUserName: string;
   userId: string;
 }) {
+  const PAGE_SIZE = 8;
   const firstName = currentUserName.split(" ")[0];
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   const courseById = new Map(courses.map((c) => [c.id, c.name]));
   const courseNameFor = (doc: DocumentItem) =>
@@ -58,6 +60,8 @@ export function OverviewPage({
       .toLowerCase()
       .includes(query.toLowerCase())
   );
+
+  const totalPages = Math.max(1, Math.ceil(filteredDocuments.length / PAGE_SIZE));
 
   const recentDocuments = [...documents]
     .sort((a, b) => b.date.localeCompare(a.date))
@@ -332,7 +336,7 @@ export function OverviewPage({
           </div>
 
           {filteredDocuments
-            .slice(0, 5)
+            .slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
             .map((doc) => (
               <div className="document-row" key={doc.id}>
                 <div className="document-name">
@@ -360,6 +364,58 @@ export function OverviewPage({
               </div>
             ))}
         </div>
+
+        {filteredDocuments.length > 0 && (
+          <div className="list-footer">
+            <span>
+              {Math.min(page * PAGE_SIZE, filteredDocuments.length)} sur{" "}
+              {filteredDocuments.length}
+            </span>
+            <div className="progress-track">
+              <div
+                className="progress-fill"
+                style={{
+                  width: `${Math.min(
+                    100,
+                    Math.max(0,
+                      ((page - 1) * PAGE_SIZE +
+                        Math.min(PAGE_SIZE, filteredDocuments.length - (page - 1) * PAGE_SIZE)) /
+                        filteredDocuments.length) * 100
+                  )}%`,
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className="pagination">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              aria-label="Page précédente"
+            >
+              ‹
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPage(p)}
+                className={p === page ? "active" : ""}
+                aria-label={`Page ${p}`}
+              >
+                {p}
+              </button>
+            ))}
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              aria-label="Page suivante"
+            >
+              ›
+            </button>
+          </div>
+        )}
       </section>
 
       <footer className="page-footer">

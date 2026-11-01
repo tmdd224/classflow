@@ -32,7 +32,9 @@ export function ValidationPage({
   role: Role;
   onRefresh: () => void;
 }) {
+  const PAGE_SIZE = 8;
   const [filter, setFilter] = useState("Tous");
+  const [page, setPage] = useState(1);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
@@ -115,6 +117,8 @@ export function ValidationPage({
     }
     return true;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredDocuments.length / PAGE_SIZE));
 
   const selectedCount = selectedIds.size;
   const hasSelection = selectedCount > 0;
@@ -671,179 +675,238 @@ export function ValidationPage({
               Les documents déposés apparaîtront ici pour être examinés.
             </p>
           </div>
-        ) : (
+        ) : (<>
           <div className="validation-list">
-            {filteredDocuments.map((doc) => {
-              const author = profileById.get(doc.uploaded_by);
-              const docIsPending = isPending(doc);
-              const docIsSelected = isSelected(doc.id);
-              const events = eventsByDoc[doc.id];
-              const isLoadingEvents = eventsLoading[doc.id];
-              const isExpanded = eventsExpanded[doc.id];
+            {filteredDocuments
+              .slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+              .map((doc) => {
+                const author = profileById.get(doc.uploaded_by);
+                const docIsPending = isPending(doc);
+                const docIsSelected = isSelected(doc.id);
+                const events = eventsByDoc[doc.id];
+                const isLoadingEvents = eventsLoading[doc.id];
+                const isExpanded = eventsExpanded[doc.id];
 
-              return (
-                <article className="validation-item" key={doc.id}>
-                  <div className="validation-document-header">
-                    {canValidate && docIsPending && (
-                      <div className="selection-checkbox">
-                        <input
-                          type="checkbox"
-                          checked={docIsSelected}
-                          onChange={() => toggleSelection(doc.id)}
-                          disabled={batchProcessing || batchResult !== null}
-                        />
-                      </div>
-                    )}
-
-                    <div className={`file-icon ${doc.color}`}>
-                      <FileText size={20} />
-                    </div>
-
-                    <div className="validation-document-info">
-                      <strong>{doc.name}</strong>
-
-                      <span>
-                        {typeLabelFromMimeType(doc.mime_type)} ·
-                        {courseNameFor(doc)} ·
-                        {formatDateFR(doc.date)} · {doc.size}
-                      </span>
-
-                      {author && (
-                        <span className="document-author">
-                          Par {author}
-                        </span>
-                      )}
-                    </div>
-
-                    <span
-                      className={`validation-status ${
-                        doc.status === "approved"
-                          ? "approved"
-                          : doc.status === "rejected"
-                            ? "rejected"
-                            : "pending"
-                      }`}
-                    >
-                      {doc.status === "approved"
-                        ? "Valide"
-                        : doc.status === "rejected"
-                          ? "Refuse"
-                          : "En attente"}
-                    </span>
-                  </div>
-
-                  {doc.description && (
-                    <p className="validation-description">{doc.description}</p>
-                  )}
-
-                  {doc.status === "rejected" && doc.rejection_reason && (
-                    <div className="validation-comment">
-                      <strong>Motif du refus :</strong>
-                      <p>{doc.rejection_reason}</p>
-                    </div>
-                  )}
-
-                  <div className="validation-actions">
-                    {canValidate && docIsPending && !batchProcessing && !batchResult ? (
-                      <>
-                        {docIsSelected ? (
-                          <button
-                            type="button"
-                            className="text-button"
-                            onClick={() => toggleSelection(doc.id)}
-                          >
-                            Désélectionner
-                          </button>
-                        ) : null}
-                      </>
-                    ) : null}
-
-                    {canValidate && !docIsPending && !batchProcessing && !batchResult && !isReopening(doc.id) ? (
-                      <button
-                        type="button"
-                        className="text-button"
-                        onClick={() => startReopen(doc.id)}
-                        disabled={batchProcessing || batchResult !== null}
-                      >
-                        Rouvrir la décision
-                      </button>
-                    ) : null}
-
-                    {isReopening(doc.id) && (
-                      <div className="action-reason">
-                        <textarea
-                          value={reopenReason}
-                          onChange={(e) => setReopenReason(e.target.value)}
-                          placeholder="Motif de la réouverture (obligatoire)"
-                          rows={2}
-                        />
-                        <div className="upload-actions">
-                          <button
-                            type="button"
-                            className="text-button"
-                            onClick={cancelReopen}
-                          >
-                            Annuler
-                          </button>
-                          <button
-                            type="button"
-                            className="primary-button"
-                            onClick={confirmReopen}
-                            disabled={!reopenReason.trim()}
-                          >
-                            Confirmer
-                          </button>
+                return (
+                  <article className="validation-item" key={doc.id}>
+                    <div className="validation-document-header">
+                      {canValidate && docIsPending && (
+                        <div className="selection-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={docIsSelected}
+                            onChange={() => toggleSelection(doc.id)}
+                            disabled={batchProcessing || batchResult !== null}
+                          />
                         </div>
+                      )}
+
+                      <div className={`file-icon ${doc.color}`}>
+                        <FileText size={20} />
                       </div>
-                    )}
 
-                    <button
-                      className="reset-filters"
-                      onClick={() => handleDownload(doc)}
-                    >
-                      <Download size={16} strokeWidth={1.8} /> Télécharger
-                    </button>
+                      <div className="validation-document-info">
+                        <strong>{doc.name}</strong>
 
-                    <button
-                      className="reset-filters"
-                      onClick={() => toggleEvents(doc.id)}
-                    >
-                      <List size={16} />
-                      {isExpanded ? "Masquer l'historique" : "Historique"}
-                    </button>
+                        <span>
+                          {typeLabelFromMimeType(doc.mime_type)} ·
+                          {courseNameFor(doc)} ·
+                          {formatDateFR(doc.date)} · {doc.size}
+                        </span>
 
-                    {isExpanded && (
-                      <div className="document-history">
-                        {isLoadingEvents ? (
-                          <span>Chargement de l'historique…</span>
-                        ) : events ? (
-                          <ul>
-                            {events.map((event: any) => (
-                              <li key={event.id}>
-                                <span className="history-action">
-                                  {event.action}
-                                </span>
-                                <span className="history-date">
-                                  {formatDateFR(event.created_at)}
-                                </span>
-                                {event.reason && (
-                                  <span className="history-reason">
-                                    {event.reason}
-                                  </span>
-                                )}
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p>Aucun historique disponible.</p>
+                        {author && (
+                          <span className="document-author">
+                            Par {author}
+                          </span>
                         )}
                       </div>
+
+                      <span
+                        className={`validation-status ${
+                          doc.status === "approved"
+                            ? "approved"
+                            : doc.status === "rejected"
+                              ? "rejected"
+                              : "pending"
+                        }`}
+                      >
+                        {doc.status === "approved"
+                          ? "Valide"
+                          : doc.status === "rejected"
+                            ? "Refuse"
+                            : "En attente"}
+                      </span>
+                    </div>
+
+                    {doc.description && (
+                      <p className="validation-description">{doc.description}</p>
                     )}
-                  </div>
-                </article>
-              );
-            })}
+
+                    {doc.status === "rejected" && doc.rejection_reason && (
+                      <div className="validation-comment">
+                        <strong>Motif du refus :</strong>
+                        <p>{doc.rejection_reason}</p>
+                      </div>
+                    )}
+
+                    <div className="validation-actions">
+                      {canValidate && docIsPending && !batchProcessing && !batchResult ? (
+                        <>
+                          {docIsSelected ? (
+                            <button
+                              type="button"
+                              className="text-button"
+                              onClick={() => toggleSelection(doc.id)}
+                            >
+                              Désélectionner
+                            </button>
+                          ) : null}
+                        </>
+                      ) : null}
+
+                      {canValidate && !docIsPending && !batchProcessing && !batchResult && !isReopening(doc.id) ? (
+                        <button
+                          type="button"
+                          className="text-button"
+                          onClick={() => startReopen(doc.id)}
+                          disabled={batchProcessing || batchResult !== null}
+                        >
+                          Rouvrir la décision
+                        </button>
+                      ) : null}
+
+                      {isReopening(doc.id) && (
+                        <div className="action-reason">
+                          <textarea
+                            value={reopenReason}
+                            onChange={(e) => setReopenReason(e.target.value)}
+                            placeholder="Motif de la réouverture (obligatoire)"
+                            rows={2}
+                          />
+                          <div className="upload-actions">
+                            <button
+                              type="button"
+                              className="text-button"
+                              onClick={cancelReopen}
+                            >
+                              Annuler
+                            </button>
+                            <button
+                              type="button"
+                              className="primary-button"
+                              onClick={confirmReopen}
+                              disabled={!reopenReason.trim()}
+                            >
+                              Confirmer
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      <button
+                        className="reset-filters"
+                        onClick={() => handleDownload(doc)}
+                      >
+                        <Download size={16} strokeWidth={1.8} /> Télécharger
+                      </button>
+
+                      <button
+                        className="reset-filters"
+                        onClick={() => toggleEvents(doc.id)}
+                      >
+                        <List size={16} />
+                        {isExpanded ? "Masquer l'historique" : "Historique"}
+                      </button>
+
+                      {isExpanded && (
+                        <div className="document-history">
+                          {isLoadingEvents ? (
+                            <span>Chargement de l'historique…</span>
+                          ) : events ? (
+                            <ul>
+                              {events.map((event: any) => (
+                                <li key={event.id}>
+                                  <span className="history-action">
+                                    {event.action}
+                                  </span>
+                                  <span className="history-date">
+                                    {formatDateFR(event.created_at)}
+                                  </span>
+                                  {event.reason && (
+                                    <span className="history-reason">
+                                      {event.reason}
+                                    </span>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p>Aucun historique disponible.</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
           </div>
+
+          {filteredDocuments.length > 0 && (
+            <div className="list-footer">
+              <span>
+                {Math.min(page * PAGE_SIZE, filteredDocuments.length)} sur{" "}
+                {filteredDocuments.length}
+              </span>
+              <div className="progress-track">
+                <div
+                  className="progress-fill"
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      Math.max(0,
+                        ((page - 1) * PAGE_SIZE +
+                          Math.min(
+                            PAGE_SIZE,
+                            filteredDocuments.length - (page - 1) * PAGE_SIZE
+                          )) /
+                            filteredDocuments.length) *
+                          100
+                    )}%`,
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <div className="pagination">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                aria-label="Page précédente"
+              >
+                ‹
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className={p === page ? "active" : ""}
+                  aria-label={`Page ${p}`}
+                >
+                  {p}
+                </button>
+              ))}
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                aria-label="Page suivante"
+              >
+                ›
+              </button>
+            </div>
+          )}
+        </>
         )}
       </section>
     </div>
