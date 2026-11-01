@@ -478,9 +478,12 @@ export async function getDocumentSignedUrl(
 
 /**
  * Traduit une erreur Supabase en message français lisible.
+ * Consigne aussi l'erreur brute en console pour le débogage.
  */
 export function translateDbError(error: unknown): string {
-  const message = (error as { message?: string }).message?.toLowerCase() ?? "";
+  const err = error as { message?: string; code?: string; details?: string; hint?: string };
+  const message = err.message?.toLowerCase() ?? "";
+  console.error("Erreur Supabase brute:", { message: err.message, code: err.code, details: err.details, hint: err.hint });
   if (message.includes("permission") || message.includes("droit") || message.includes("forbidden")) {
     return "Droit refusé par le serveur.";
   }
@@ -493,7 +496,22 @@ export function translateDbError(error: unknown): string {
   if (message.includes("network") || message.includes("fetch") || message.includes("echec")) {
     return "Erreur réseau. Vérifiez votre connexion.";
   }
-  return "Erreur inattendue du serveur.";
+  if (message.includes("duplicate") || message.includes("déjà existant") || message.includes("already exists")) {
+    return "Cet élément existe déjà.";
+  }
+  if (message.includes("null value") || message.includes("valeur nulle") || message.includes("not-null")) {
+    return "Champ obligatoire manquant.";
+  }
+  if (message.includes("check constraint") || message.includes("contrainte de vérification")) {
+    return "La donnée ne respecte pas une contrainte de validation.";
+  }
+  if (message.includes("foreign key") || message.includes("clé étrangère")) {
+    return "Référence invalide vers une autre table.";
+  }
+  if (message.includes("unique") || message.includes("unicité")) {
+    return "Une entrée avec cette valeur existe déjà.";
+  }
+  return `Erreur inattendue du serveur : ${err.message ?? "inconnue"}`;
 }
 
 /**
