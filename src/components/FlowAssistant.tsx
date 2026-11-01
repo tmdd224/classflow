@@ -1,5 +1,4 @@
 import {
-  ArrowRight,
   Bot,
   BookOpen,
   Mic,
@@ -9,6 +8,7 @@ import {
   User,
 } from "lucide-react";
 import { useState } from "react";
+import { generateGeminiResponse, type GeminiMessage } from "../lib/gemini";
 
 type QuickAction = {
   label: string;
@@ -21,28 +21,46 @@ const QUICK_ACTIONS: QuickAction[] = [
   { label: "Explique le statut en attente", icon: Mic },
 ];
 
-export function FlowAssistant() {
+type FlowAssistantProps = {
+  onClose: () => void;
+};
+
+export function FlowAssistant({ onClose }: FlowAssistantProps) {
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<{ text: string; type: "bot" | "user" }[]>([
+  const [messages, setMessages] = useState<GeminiMessage[]>([
     {
+      role: "model",
       text: "Bonjour Étudiant. Je peux t'aider à réviser, comprendre un cours ou utiliser ClassFlow.",
-      type: "bot",
     },
   ]);
+  const [isSending, setIsSending] = useState(false);
 
   async function handleSend() {
     const text = input.trim();
-    if (!text) return;
+    if (!text || isSending) return;
 
-    setMessages((prev) => [...prev, { text, type: "user" }]);
+    const userMessage: GeminiMessage = { role: "user", text };
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
+    setIsSending(true);
 
-    // Simuler une réponse de l'assistant
-    setTimeout(() => {
-      const reply =
-        "Je peux t'aider avec cela. Peux-tu me préciser de quel document ou de quel cours il s'agit ?";
-      setMessages((prev) => [...prev, { text: reply, type: "bot" }]);
-    }, 800);
+    try {
+      const allMessages: GeminiMessage[] = [...messages, userMessage];
+      const reply = await generateGeminiResponse(allMessages);
+      setMessages((prev) => [...prev, { role: "model", text: reply }]);
+    } catch (error) {
+      console.error("Erreur Flow Assistant:", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "model",
+          text:
+            "Une erreur est survenue. Vérifiez votre configuration et réessayez.",
+        },
+      ]);
+    } finally {
+      setIsSending(false);
+    }
   }
 
   return (
@@ -59,7 +77,7 @@ export function FlowAssistant() {
             </span>
           </div>
         </div>
-        <button className="flow-close" aria-label="Fermer l'assistant">
+        <button className="flow-close" aria-label="Fermer l'assistant" onClick={onClose}>
           <span>✕</span>
         </button>
       </div>
@@ -68,9 +86,9 @@ export function FlowAssistant() {
         {messages.map((msg, i) => (
           <div
             key={i}
-            className={`flow-message ${msg.type}`}
+            className={`flow-message ${msg.role}`}
           >
-            {msg.type === "bot" ? (
+            {msg.role === "model" ? (
               <>
                 <div className="flow-avatar">
                   <Bot size={16} />
@@ -87,6 +105,16 @@ export function FlowAssistant() {
             )}
           </div>
         ))}
+        {isSending && (
+          <div className="flow-message model">
+            <div className="flow-avatar">
+              <Bot size={16} />
+            </div>
+            <div className="flow-bubble">
+              Flow réfléchit…
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flow-quick-actions">
@@ -98,6 +126,7 @@ export function FlowAssistant() {
               setInput(action.label);
               handleSend();
             }}
+            disabled={isSending}
           >
             <action.icon size={14} strokeWidth={1.6} />
             <span>{action.label}</span>
@@ -116,11 +145,12 @@ export function FlowAssistant() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             placeholder="Posez votre question à Flow…"
+            disabled={isSending}
           />
           <button
             className="flow-send"
             onClick={handleSend}
-            disabled={!input.trim()}
+            disabled={!input.trim() || isSending}
           >
             <Send size={16} strokeWidth={1.8} />
           </button>

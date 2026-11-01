@@ -421,7 +421,7 @@ function App() {
         </div>
 
         {flowAssistantOpen && (
-          <FlowAssistant />
+          <FlowAssistant onClose={() => setFlowAssistantOpen(false)} />
         )}
       </main>
     </div>
