@@ -8,7 +8,6 @@ import {
   User,
 } from "lucide-react";
 import { useState } from "react";
-import { generateGeminiResponse, type GeminiMessage } from "../lib/gemini";
 
 type QuickAction = {
   label: string;
@@ -27,7 +26,7 @@ type FlowAssistantProps = {
 
 export function FlowAssistant({ onClose }: FlowAssistantProps) {
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<GeminiMessage[]>([
+  const [messages, setMessages] = useState<{ role: "user" | "model"; text: string }[]>([
     {
       role: "model",
       text: "Bonjour Étudiant. Je peux t'aider à réviser, comprendre un cours ou utiliser ClassFlow.",
@@ -39,21 +38,22 @@ export function FlowAssistant({ onClose }: FlowAssistantProps) {
     const text = input.trim();
     if (!text || isSending) return;
 
-    const userMessage: GeminiMessage = { role: "user", text };
+    const userMessage = { role: "user" as const, text };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsSending(true);
 
     try {
-      const allMessages: GeminiMessage[] = [...messages, userMessage];
-      const reply = await generateGeminiResponse(allMessages);
-      setMessages((prev) => [...prev, { role: "model", text: reply }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "model" as const, text: "Assistant bientôt disponible" },
+      ]);
     } catch (error) {
       console.error("Erreur Flow Assistant:", error);
       setMessages((prev) => [
         ...prev,
         {
-          role: "model",
+          role: "model" as const,
           text:
             "Une erreur est survenue. Vérifiez votre configuration et réessayez.",
         },
