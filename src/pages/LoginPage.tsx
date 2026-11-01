@@ -6,36 +6,36 @@ import {
   GraduationCap,
   Lock,
   Mail,
+  Shield,
   User,
-  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 
-type RoleOption = {
-  value: "etudiant" | "responsable" | "administrateur";
+type RoleCard = {
   label: string;
+  email: string;
   icon: React.ComponentType<{ size?: number; strokeWidth?: number }>;
   color: string;
 };
 
-const ROLE_OPTIONS: RoleOption[] = [
+const ROLE_CARDS: RoleCard[] = [
   {
-    value: "etudiant",
     label: "Étudiant",
-    icon: User,
-    color: "#2563eb",
-  },
-  {
-    value: "responsable",
-    label: "Responsable pédagogique",
+    email: "etudiant@classflow.fr",
     icon: GraduationCap,
     color: "#7c3aed",
   },
   {
-    value: "administrateur",
+    label: "Responsable",
+    email: "responsable@classflow.fr",
+    icon: Shield,
+    color: "#2563eb",
+  },
+  {
     label: "Administrateur",
-    icon: ShieldCheck,
-    color: "#059669",
+    email: "admin@classflow.fr",
+    icon: User,
+    color: "#0f172a",
   },
 ];
 
@@ -46,9 +46,6 @@ export function LoginPage() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<RoleOption["value"] | null>(
-    null
-  );
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -62,84 +59,118 @@ export function LoginPage() {
   }
 
   return (
-    <div className="login-page">
-      <div className="login-card">
-        <div className="login-header">
-          <div className="login-brand">
-            <GraduationCap size={20} />
-            classflow<span className="login-dot">.</span>
-          </div>
-          <h2 className="login-title">Connexion</h2>
-          <p className="login-subtitle">
-            Accédez à votre espace académique ClassFlow.
-          </p>
+    <div className="login-layout">
+      {/* Panneau gauche - marque */}
+      <div className="login-left">
+        <div className="login-brand">
+          <GraduationCap size={26} />
+          <span>classflow<span className="login-dot">.</span></span>
         </div>
 
-        {error && (
-          <div className="login-alert">
-            <AlertCircle size={18} />
-            <span>{error}</span>
-          </div>
-        )}
+        <div className="login-badge">CAMPUS DIGITAL NOUVELLE GÉNÉRATION</div>
 
-        <form onSubmit={handleSubmit} className="login-form" noValidate>
-          <div className="login-field">
-            <Mail size={18} className="login-field-icon" />
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-              autoComplete="email"
-            />
-          </div>
-          <div className="login-field">
-            <Lock size={18} className="login-field-icon" />
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Mot de passe"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              autoComplete="current-password"
-            />
-            <button
-              type="button"
-              className="login-toggle-password"
-              onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-            >
-              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
-          </div>
-          <button type="submit" className="login-submit" disabled={submitting}>
-            {submitting ? "Connexion en cours…" : "Se connecter"}
-          </button>
-        </form>
+        <h1 className="login-left-title">
+          Apprendre.<br />
+          Partager.<br />
+          Réussir ensemble.
+        </h1>
 
-        <div className="role-selector-section">
-          <div className="role-selector-label">Je me connecte en tant que</div>
-          <div className="role-selector-buttons">
-            {ROLE_OPTIONS.map((role) => (
-              <button
-                key={role.value}
-                type="button"
-                className={`role-selector-btn ${
-                  selectedRole === role.value ? "active" : ""
-                }`}
-                onClick={() => setSelectedRole(selectedRole === role.value ? null : role.value)}
-              >
-                <role.icon size={16} strokeWidth={1.5} />
-                <span>{role.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <p className="login-note">
-          Pas de compte ? Les comptes sont créés par l’administration.
+        <p className="login-left-description">
+          Un espace académique sécurisé pour centraliser les cours, déposer des
+          ressources et piloter leur validation.
         </p>
+
+        <div className="login-left-footer">
+          <span className="footer-item">
+            <Shield size={14} strokeWidth={1.5} /> Accès sécurisé
+          </span>
+          <span className="footer-separator">·</span>
+          <span className="footer-item">Institut Supérieur du Management</span>
+        </div>
+      </div>
+
+      {/* Panneau droit - formulaire */}
+      <div className="login-right">
+        <div className="login-card">
+          <div className="login-eyebrow">BIENVENUE</div>
+
+          <h2 className="login-title">Connectez-vous</h2>
+          <p className="login-subtitle">
+            Accédez à votre espace selon votre rôle.
+          </p>
+
+          {error && (
+            <div className="login-alert">
+              <AlertCircle size={18} />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="login-form" noValidate>
+            <div className="login-field">
+              <label className="login-field-label">Adresse e-mail</label>
+              <div className="login-field-wrapper">
+                <Mail size={18} className="login-field-icon" />
+                <input
+                  type="email"
+                  placeholder="vous@classflow.fr"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  required
+                  autoComplete="email"
+                />
+                <Shield size={16} className="login-field-badge" />
+              </div>
+            </div>
+
+            <div className="login-field">
+              <label className="login-field-label">Mot de passe</label>
+              <div className="login-field-wrapper">
+                <Lock size={18} className="login-field-icon" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Votre mot de passe"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  className="login-toggle-password"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" className="login-submit" disabled={submitting}>
+              {submitting ? "Connexion en cours…" : "Se connecter"}
+            </button>
+          </form>
+
+          <div className="demo-section">
+            <div className="demo-label">ACCÈS DE DÉMONSTRATION</div>
+
+            <div className="role-cards">
+              {ROLE_CARDS.map((role) => (
+                <div key={role.label} className="role-card">
+                  <div className="role-card-icon">
+                    <role.icon size={20} strokeWidth={1.5} />
+                  </div>
+                  <div className="role-card-label">{role.label}</div>
+                  <div className="role-card-email">{role.email}</div>
+                </div>
+              ))}
+            </div>
+
+            <p className="demo-note">
+              Mot de passe démo : Classflow2026!
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
