@@ -1,4 +1,4 @@
-import { ArrowRight, FileText, Play, BookOpen } from "lucide-react";
+import { ArrowRight, BookOpen, Download, FileText, Play } from "lucide-react";
 import { useState } from "react";
 import {
   getDocumentSignedUrl,
@@ -154,7 +154,7 @@ export function CoursesPage({
                   )
                 }
               >
-                <ArrowRight size={17} />
+                <Download size={16} strokeWidth={1.8} />
               </button>
             </div>
           ))}
@@ -209,7 +209,7 @@ export function CoursesPage({
                     onClick={() => handleDownload(doc)}
                     title="Télécharger"
                   >
-                    <span>↓</span>
+                    <Download size={16} strokeWidth={1.8} />
                   </button>
                 </div>
               ))}

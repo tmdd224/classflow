@@ -1,4 +1,4 @@
-import { FileText } from "lucide-react";
+import { Download, FileText, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 import type { Course, DocumentItem } from "../types";
 import {
@@ -7,6 +7,8 @@ import {
   typeLabelFromMimeType,
   translateDbError,
 } from "../lib/supabase";
+
+const PAGE_SIZE = 8;
 
 export function DocumentsPage({
   documents,
@@ -19,6 +21,7 @@ export function DocumentsPage({
 }) {
   const search = query.toLowerCase().trim();
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   const courseById = new Map(courses.map((c) => [c.id, c.name]));
 
@@ -30,6 +33,12 @@ export function DocumentsPage({
       : true;
     return matchesSearch;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPageDocs = filtered.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE
+  );
 
   async function handleDownload(doc: DocumentItem) {
     setDownloadError(null);
@@ -87,7 +96,7 @@ export function DocumentsPage({
             <span>DATE / TAILLE</span>
             <span />
           </div>
-          {filtered.map((doc) => {
+          {currentPageDocs.map((doc) => {
             const courseName =
               doc.courseId !== undefined
                 ? courseById.get(doc.courseId) ?? "Cours inconnu"
@@ -130,86 +139,69 @@ export function DocumentsPage({
                   onClick={() => handleDownload(doc)}
                   title="Télécharger"
                 >
-                  <span>↓</span>
+                  <Download size={16} strokeWidth={1.8} />
+                </button>
+
+                <button
+                  className="more-options"
+                  aria-label="Plus d'options"
+                >
+                  <MoreHorizontal size={16} strokeWidth={1.8} />
                 </button>
               </div>
             );
           })}
         </div>
+
+        {filtered.length > 0 && (
+          <div className="list-footer">
+            <span>
+              {Math.min(page * PAGE_SIZE, filtered.length)} sur{" "}
+              {filtered.length}
+            </span>
+            <div className="progress-track">
+              <div
+                className="progress-fill"
+                style={{
+                  width: `${Math.min(
+                    100,
+                    Math.max(0, ((page - 1) * PAGE_SIZE + currentPageDocs.length) / filtered.length) * 100
+                  )}%`,
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className="pagination">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              aria-label="Page précédente"
+            >
+              ‹
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPage(p)}
+                className={p === page ? "active" : ""}
+                aria-label={`Page ${p}`}
+              >
+                {p}
+              </button>
+            ))}
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              aria-label="Page suivante"
+            >
+              ›
+            </button>
+          </div>
+        )}
       </section>
-
-      {documents.length > 0 && (
-        <section className="panel documents-panel">
-          <div className="section-heading">
-            <div>
-              <span className="section-kicker">RESSOURCES DE LA BASE</span>
-              <h3>
-                {documents.length} document{documents.length > 1 ? "s" : ""}
-                disponible{documents.length > 1 ? "s" : ""}
-              </h3>
-            </div>
-          </div>
-
-          <div className="document-table">
-            <div className="document-head">
-              <span>NOM DU DOCUMENT</span>
-              <span>TYPE</span>
-              <span>COURS</span>
-              <span>STATUT</span>
-              <span>DATE / TAILLE</span>
-              <span />
-            </div>
-            {documents.map((doc) => {
-              const courseName =
-                doc.courseId !== undefined
-                  ? courseById.get(doc.courseId) ?? "Cours inconnu"
-                  : "—";
-              return (
-                <div className="document-row" key={doc.id}>
-                  <div className="document-name">
-                    <div className={`file-icon ${doc.color}`}>
-                      <FileText size={18} />
-                    </div>
-
-                    <strong>{doc.name}</strong>
-                  </div>
-
-                  <span className="document-course">
-                    {typeLabelFromMimeType(doc.mime_type)}
-                  </span>
-                  <span className="document-course">{courseName}</span>
-                  <span
-                    className={`document-status ${
-                      doc.status === "approved"
-                        ? "approved"
-                        : doc.status === "rejected"
-                          ? "rejected"
-                          : "pending"
-                    }`}
-                  >
-                    {doc.status === "approved"
-                      ? "Validé"
-                      : doc.status === "rejected"
-                        ? "Refusé"
-                        : "En attente"}
-                  </span>
-                  <span className="document-date">
-                    {formatDateFR(doc.date)} · {doc.size}
-                  </span>
-
-                  <button
-                    className="download-button"
-                    onClick={() => handleDownload(doc)}
-                    title="Télécharger"
-                  >
-                    <span>↓</span>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
     </div>
   );
 }

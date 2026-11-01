@@ -1,6 +1,7 @@
 import {
   ArrowRight,
   Bell,
+  Bot,
   ChevronRight,
   GraduationCap,
   LayoutDashboard,
@@ -46,6 +47,7 @@ import type {
 } from "./types";
 import { roleLabels } from "./types";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { FlowAssistant } from "./components/FlowAssistant";
 
 function initials(source: string) {
   return source
@@ -65,6 +67,7 @@ function App() {
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [flowAssistantOpen, setFlowAssistantOpen] = useState(false);
 
   // Données chargées depuis Supabase
   const [coursesData, setCoursesData] = useState<Course[]>([]);
@@ -333,6 +336,14 @@ function App() {
               <i />
             </button>
 
+            <button
+              className="icon-button"
+              aria-label="Assistant Flow"
+              onClick={() => setFlowAssistantOpen(!flowAssistantOpen)}
+            >
+              <Bot size={17} />
+            </button>
+
             <div className="top-avatar">{avatarInitials}</div>
           </div>
         </header>
@@ -408,6 +419,10 @@ function App() {
           ) : null}
           </ErrorBoundary>
         </div>
+
+        {flowAssistantOpen && (
+          <FlowAssistant />
+        )}
       </main>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Clock3, CheckCircle2, FileText, ShieldCheck, X } from "lucide-react";
+import { Clock3, CheckCircle2, Download, FileText, ShieldCheck, X } from "lucide-react";
 import type { Course, DocumentItem, User } from "../types";
 import {
   getDocumentSignedUrl,
@@ -208,10 +208,11 @@ export function MyDepositsPage({
 
                   <div className="validation-actions">
                     <button
-                      className="reset-filters"
+                      className="download-button"
                       onClick={() => handleDownload(doc)}
+                      title="Télécharger"
                     >
-                      <span>↓</span> Telecharger
+                      <Download size={16} strokeWidth={1.8} />
                     </button>
                   </div>
                 </article>
