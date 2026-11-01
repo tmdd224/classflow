@@ -133,17 +133,31 @@ export function AdminPage({
         </div>
       )}
 
-      <div className="welcome-row">
-        <div>
-          <div className="eyebrow">
-            <span className="live-dot" /> ADMINISTRATION
+      <div className="admin-hero">
+        <div className="admin-hero-content">
+          <div className="admin-hero-text">
+            <div className="eyebrow">
+              <span className="live-dot" /> ADMINISTRATION
+            </div>
+            <h1>Tableau de bord</h1>
+            <p className="page-subtitle">
+              Gestion des utilisateurs, des classes et des cours.
+            </p>
           </div>
-
-          <h1>Tableau de bord</h1>
-
-          <p className="page-subtitle">
-            Gestion des utilisateurs, des classes et des cours.
-          </p>
+          <div className="admin-hero-stats">
+            <div className="admin-stat-mini">
+              <div className="label">Utilisateurs</div>
+              <div className="value">{users.length}</div>
+            </div>
+            <div className="admin-stat-mini">
+              <div className="label">Classes</div>
+              <div className="value">{classes.length}</div>
+            </div>
+            <div className="admin-stat-mini">
+              <div className="label">Cours</div>
+              <div className="value">{courses.length}</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -189,7 +203,7 @@ export function AdminPage({
         />
       </section>
 
-      <section className="panel">
+      <section className="panel admin-panel admin-section">
         <div className="section-heading">
           <div>
             <span className="section-kicker">UTILISATEURS</span>
@@ -209,7 +223,7 @@ export function AdminPage({
           </div>
 
           {users.map((user: User) => (
-            <div className="document-row" key={user.id}>
+            <div className="document-row admin-row" key={user.id}>
               <strong>{user.name}</strong>
               <span>{user.email}</span>
               <span>{roleLabels[user.role]}</span>
@@ -236,7 +250,7 @@ export function AdminPage({
         </div>
       </section>
 
-      <section className="panel">
+      <section className="panel admin-panel admin-section">
         <div className="section-heading">
           <div>
             <span className="section-kicker">CLASSES</span>
@@ -244,16 +258,16 @@ export function AdminPage({
           </div>
 
           {creatingClass ? (
-            <div className="admin-actions creating">
+            <div className="admin-actions creating admin-create-form">
               <input
-                className="admin-input"
+                className="admin-input admin-input-premium"
                 value={newClassName}
                 onChange={(e) => setNewClassName(e.target.value)}
                 placeholder="Nom de la classe"
                 autoFocus
               />
               <input
-                className="admin-input"
+                className="admin-input admin-input-premium"
                 value={newClassNiveau}
                 onChange={(e) => setNewClassNiveau(e.target.value)}
                 placeholder="Niveau (ex: L3, M1...)"
@@ -291,13 +305,14 @@ export function AdminPage({
             const currentResp = classe.responsable ?? "";
             const isSaving = saving[classe.id];
             return (
-              <div className="document-row" key={classe.id}>
+              <div className="document-row admin-row" key={classe.id}>
                 <strong>{classe.name}</strong>
                 <span>{classe.niveau}</span>
                 <span>{classe.effectif}</span>
                 <div className="responsable-cell">
-                  <select
-                    value={classResponsable[classe.id] ?? currentResp}
+                  <div className="responsable-select-wrap">
+                    <select
+                      value={classResponsable[classe.id] ?? currentResp}
                     onChange={(e) => setClassResponsable({ ...classResponsable, [classe.id]: e.target.value })}
                     disabled={isSaving}
                   >
@@ -308,6 +323,7 @@ export function AdminPage({
                       </option>
                     ))}
                   </select>
+                    </div>
                   {isSaving ? (
                     <Save size={14} />
                   ) : (
@@ -326,7 +342,7 @@ export function AdminPage({
         </div>
       </section>
 
-      <section className="panel">
+      <section className="panel admin-panel admin-section">
         <div className="section-heading">
           <div>
             <span className="section-kicker">COURS</span>
@@ -349,12 +365,13 @@ export function AdminPage({
             const currentResp = course.responsable ?? "";
             const isSaving = saving[course.code];
             return (
-              <div className="document-row" key={course.code}>
+              <div className="document-row admin-row" key={course.code}>
                 <strong>{course.name}</strong>
                 <span>{course.code}</span>
                 <div className="responsable-cell">
-                  <select
-                    value={courseResponsable[course.code] ?? currentResp}
+                  <div className="responsable-select-wrap">
+                    <select
+                      value={courseResponsable[course.code] ?? currentResp}
                     onChange={(e) => setCourseResponsable({ ...courseResponsable, [course.code]: e.target.value })}
                     disabled={isSaving}
                   >
@@ -365,6 +382,7 @@ export function AdminPage({
                       </option>
                     ))}
                   </select>
+                    </div>
                   {isSaving ? (
                     <Save size={14} />
                   ) : (
